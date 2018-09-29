@@ -1,6 +1,7 @@
 [package]
-name = "Roguelike"
+name = "roguelike"
 version = "0.1.0"
 authors = ["Boxfort <jackwanderson@protonmail.com>"]
 
 [dependencies]
+tcod = "0.12.1"
