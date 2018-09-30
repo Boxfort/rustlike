@@ -66,18 +66,23 @@ impl Map {
         map
     }
 
-    pub fn draw(&self, con: &mut Console) {
+    pub fn draw(&mut self, con: &mut Console) {
         for y in 0..MAP_HEIGHT {
             for x in 0..MAP_WIDTH {
                 let visible = self.fov_map.is_in_fov(x, y);
-                let tile = &self.tiles[x as usize][y as usize];
+                let tile = &mut self.tiles[x as usize][y as usize];
 
                 let (bg_color, fg_color) = match visible {
-                    true => (tile.background_color, tile.foreground_color),
+                    true => {
+                        tile.explored = true;
+                        (tile.background_color, tile.foreground_color)
+                    },
                     false => (UNSEEN_COLOR, UNSEEN_COLOR),
                 };
 
-                con.set_char_background(x, y, bg_color, BackgroundFlag::Set);
+                if tile.explored {
+                    con.set_char_background(x, y, bg_color, BackgroundFlag::Set);
+                }
             }
         }
     }
@@ -90,6 +95,11 @@ impl Map {
         self.fov_map.is_in_fov(x, y)
     }
 
+    /// Randomly generates a new map.
+    ///
+    /// Generates a map of rectangular rooms between
+    /// ROOM_MIN_SIZE and ROOM_MAX_SIZE size and up to
+    /// MAX_ROOMS rooms.
     pub fn generate_map(&mut self) -> (i32, i32) {
         self.tiles = vec![vec![Tile::wall(); self.height as usize]; self.width as usize];
 
@@ -110,14 +120,11 @@ impl Map {
             let y = rand_y.sample(&mut rng);
 
             let room = Rect::new(x, y, w, h);
-
             let failed = rooms.iter().any(|other| room.intersects_with(other));
 
             if !failed {
                 self.create_room(&room);
-
                 let (new_x, new_y) = room.center();
-
                 if rooms.is_empty() {
                     starting_position = (new_x, new_y);
                 } else {
@@ -130,16 +137,16 @@ impl Map {
                         self.create_h_tunnel(prev_x, new_x, new_y);
                     }
                 }
-
                 rooms.push(room);
             }
         }
 
         self.generate_fov_map();
-
         starting_position
     }
 
+    /// Updates the FOV_MAP so that the fov can be correctly
+    /// calculated for sight blocking tiles.
     fn generate_fov_map(&mut self) {
         for y in 0..MAP_HEIGHT {
             for x in 0..MAP_WIDTH {

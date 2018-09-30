@@ -9,6 +9,7 @@ pub struct Tile {
     pub character: char,
     pub background_color: Color,
     pub foreground_color: Color,
+    pub explored: bool,
 }
 
 impl Tile {
@@ -19,6 +20,7 @@ impl Tile {
             character: ' ',
             background_color: colors::BLACK,
             foreground_color: colors::BLACK,
+            explored: false,
         }
     }
 
@@ -29,6 +31,7 @@ impl Tile {
             character: '#',
             background_color: colors::GREY,
             foreground_color: colors::GREY,
+            explored: false,
         }
     }
 }
