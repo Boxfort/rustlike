@@ -38,7 +38,7 @@ impl Game {
             .init();
 
         let console = Box::new(Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT));
-        let mut player = Player::new(25, 23);
+        let player = Player::new(25, 23);
         let map = Map::new();
 
         Game {
@@ -54,6 +54,7 @@ impl Game {
         }
     }
 
+    /// Runs the main game loop
     pub fn run(&mut self) {
         let mut prev_player_position = (-1, -1);
         let start = self.map.generate_map(&mut self.objects);
@@ -81,7 +82,7 @@ impl Game {
                 break
             }
 
-            if self.objects[PLAYER].alive && player_action != PlayerAction::DidntTakeTurn {
+            if self.player.is_alive() && player_action != PlayerAction::DidntTakeTurn {
                 for i in 1..self.objects.len() {
                     println!("The {} growls.", self.objects[i].name);
                 }
@@ -89,7 +90,7 @@ impl Game {
         }
     }
 
-
+    /// Draws the map, player and all objects
     fn draw_everything(&mut self) {
         if self.fov_recompute {
             self.map.calculate_fov(self.player.position(), 10i32);
@@ -108,6 +109,7 @@ impl Game {
         blit(&mut self.console, (0,0), (SCREEN_WIDTH, SCREEN_HEIGHT), &mut self.root, (0,0), 1.0, 1.0);
     }
 
+    /// Clears the player and all objects
     fn clear_objects(&mut self) {
         for i in 0..self.objects.len() {
             self.objects[i].clear(&mut self.console);
@@ -116,6 +118,7 @@ impl Game {
         self.player.clear(&mut self.console);
     }
 
+    /// Handle the key inputs and perform actions
     fn handle_keys(&mut self) -> PlayerAction {
         let key = self.root.wait_for_keypress(true);
         match (key, self.player.is_alive()) {
@@ -129,37 +132,23 @@ impl Game {
 
             // movement keys
             (Key { code: Up, .. }, true) => {
-                self.player_move_or_attack(0, -1);
+                self.player.move_or_attack(0, -1, &self.map, &mut self.objects);
                 PlayerAction::TookTurn
             },
             (Key { code: Down, .. }, true) => {
-                self.player_move_or_attack(0, 1);
+                self.player.move_or_attack(0, 1, &self.map, &mut self.objects);
                 PlayerAction::TookTurn
             },
             (Key { code: Left, .. }, true) => {
-                self.player_move_or_attack(-1, 0);
+                self.player.move_or_attack(-1, 0, &self.map, &mut self.objects);
                 PlayerAction::TookTurn
             },
             (Key { code: Right, .. }, true) => {
-                self.player_move_or_attack(1, 0);
+                self.player.move_or_attack(1, 0, &self.map, &mut self.objects);
                 PlayerAction::TookTurn
             },
 
             _ => { PlayerAction::DidntTakeTurn },
-        }
-    }
-
-    fn player_move_or_attack(&mut self, dx: i32, dy: i32) {
-        let x = self.player.position().0 + dx;
-        let y = self.player.position().1 + dy;
-
-        let target_id = self.objects.iter().position(|object| {
-            object.position() == (x,y)
-        });
-
-        match target_id {
-            Some(target_id) => self.player.attack(target_id, &mut self.objects),
-            None => self.player.move_by(dx, dy, &self.map, &self.objects),
         }
     }
 }

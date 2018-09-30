@@ -23,7 +23,7 @@ pub struct Player {
 
 impl Player {
     pub fn new(x: i32, y: i32) -> Self {
-        let renderer = RenderComponent::new(PLAYER_CHAR, None, Some(PLAYER_COLOR));
+        let renderer = RenderComponent::new(PLAYER_CHAR, Some(colors::DESATURATED_RED), Some(PLAYER_COLOR));
         let transform = TransformComponent::new(x, y);
 
         Player {
@@ -35,11 +35,15 @@ impl Player {
         }
     }
 
-    pub fn attack(&mut self, other: usize, objects: &mut Vec<Object>) {
+    fn attack(&mut self, other: usize, objects: &mut Vec<Object>) {
         println!("Player attacks {}", objects[other].name);
     }
 
-    pub fn move_by(&mut self, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
+    /// Move the player by (dx, dy)
+    ///
+    /// If the destination is blocked by a wall or impassible object the
+    /// player will not move.
+    fn move_by(&mut self, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
         if !self.is_blocked(self.transform.position().0 + dx,
                             self.transform.position().1 + dy,
                             map,
@@ -47,6 +51,20 @@ impl Player {
             let position = self.transform.position();
             self.transform.set_position(position.0 + dx,
                                         position.1 + dy);
+        }
+    }
+
+    pub fn move_or_attack(&mut self, dx: i32, dy: i32, map: &Map, objects: &mut Vec<Object>) {
+        let x = self.position().0 + dx;
+        let y = self.position().1 + dy;
+
+        let target_id = objects.iter().position(|object| {
+            object.position() == (x,y)
+        });
+
+        match target_id {
+            Some(target_id) => self.attack(target_id, objects),
+            None => self.move_by(dx, dy, map, objects),
         }
     }
 

@@ -27,8 +27,8 @@ impl RenderComponent {
         }
     }
 
+    /// Draws a character to the specified console
     pub fn draw(&self, con: &mut Console, x: i32, y: i32) {
-
         let mut flag = BackgroundFlag::None;
 
         if self.background_color.is_some() {
@@ -43,6 +43,7 @@ impl RenderComponent {
 
     }
 
+    /// Draws a blank character to the specified console
     pub fn clear(&self, con: &mut Console, x: i32, y: i32) {
         con.put_char(x, y, ' ', BackgroundFlag::None);
     }
@@ -56,10 +57,12 @@ impl TransformComponent {
         }
     }
 
+    /// Returns the position as a tuple
     pub fn position(&self) -> (i32, i32) {
         (self.x, self.y)
     }
 
+    /// Sets the transform position
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.x = x;
         self.y = y;

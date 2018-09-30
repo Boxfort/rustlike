@@ -93,6 +93,7 @@ impl Map {
         self.fov_map.compute_fov(pos.0, pos.1, radius, FOV_LIGHT_WALLS, FOV_ALGO);
     }
 
+    /// Returns true if the specified position is in the active field of view
     pub fn is_in_fov(&self, pos: (i32, i32)) -> bool {
         self.fov_map.is_in_fov(pos.0, pos.1)
     }
@@ -149,6 +150,7 @@ impl Map {
         starting_position
     }
 
+    /// Randomly places objects into the specified room
     fn place_objects(&mut self, room: &Rect, objects: &mut Vec<Object>) {
         let mut rng = rand::thread_rng();
         let rand_monsters = Uniform::new(0, MAX_ROOM_MONSTERS + 1);
@@ -181,6 +183,7 @@ impl Map {
         }
     }
 
+    /// Add the specified rect to the map tiles
     fn create_room(&mut self, room: &Rect) {
         for x in (room.x1 + 1)..room.x2 {
             for y in (room.y1 + 1)..room.y2 {
@@ -189,12 +192,14 @@ impl Map {
         }
     }
 
+    /// Create a horizontal tunnel at height y, from x1, to x2
     fn create_h_tunnel(&mut self, x1: i32, x2: i32, y: i32) {
         for x in cmp::min(x1, x2)..(cmp::max(x1, x2) + 1) {
             self.tiles[x as usize][y as usize] = Tile::empty();
         }
     }
 
+    /// Create a vertical tunnel at width x, from y1, to y2
     fn create_v_tunnel(&mut self, y1: i32, y2: i32, x: i32) {
         for y in cmp::min(y1, y2)..(cmp::max(y1, y2) + 1) {
             self.tiles[x as usize][y as usize] = Tile::empty();

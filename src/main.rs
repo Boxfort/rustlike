@@ -8,6 +8,5 @@ mod components;
 
 fn main() {
     let mut game = core::Game::new();
-
     game.run();
 }
