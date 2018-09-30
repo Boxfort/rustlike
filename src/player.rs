@@ -1,47 +1,53 @@
 extern crate tcod;
 
-use object::tcod::console::*;
-use object::tcod::Color;
+use player::tcod::console::*;
+use player::tcod::colors::Color;
+use player::tcod::colors;
 use super::map::Map;
+use super::object::Object;
 use super::components::{
                     RenderComponent,
                     TransformComponent
                 };
 
-pub struct Object {
+const PLAYER_CHAR: char = '@';
+const PLAYER_COLOR: Color = colors::WHITE;
+
+pub struct Player {
     renderer: RenderComponent,
     transform: TransformComponent,
-    pub name: String,
-    pub blocking: bool,
-    pub alive: bool,
+    x: i32,
+    y: i32,
+    alive: bool,
 }
 
-impl Object {
-    pub fn new(
-            x: i32,
-            y: i32,
-            character: char,
-            background_color: Option<Color>,
-            foreground_color: Option<Color>,
-            name: String,
-            blocking: bool) -> Self {
-
-        let renderer = RenderComponent::new(character,
-                                            background_color,
-                                            foreground_color);
+impl Player {
+    pub fn new(x: i32, y: i32) -> Self {
+        let renderer = RenderComponent::new(PLAYER_CHAR, None, Some(PLAYER_COLOR));
         let transform = TransformComponent::new(x, y);
 
-        Object {
+        Player {
             renderer,
             transform,
-            name: name,
-            blocking: blocking,
-            alive: false,
+            x,
+            y,
+            alive: true,
         }
     }
 
     pub fn attack(&mut self, other: usize, objects: &mut Vec<Object>) {
-        println!("{} attacks {}", self.name, objects[other].name);
+        println!("Player attacks {}", objects[other].name);
+    }
+
+    pub fn move_by(&mut self, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
+        if !self.is_blocked(self.transform.position().0 + dx,
+                            self.transform.position().1 + dy,
+                            map,
+                            objects) {
+            let position = self.transform.position();
+            self.transform.set_position(position.0 + dx,
+                                        position.1 + dy);
+        }
     }
 
     fn is_blocked(&self, x: i32, y: i32, map: &Map, objects: &Vec<Object>) -> bool {
@@ -68,5 +74,9 @@ impl Object {
 
     pub fn clear(&self, con: &mut Console) {
         self.renderer.clear(con, self.transform.position().0, self.transform.position().1);
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.alive
     }
 }

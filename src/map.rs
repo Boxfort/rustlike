@@ -2,6 +2,7 @@ extern crate tcod;
 extern crate rand;
 
 use super::tile::Tile;
+use super::object::Object;
 use map::tcod::console::*;
 use map::tcod::map::{Map as FovMap, FovAlgorithm};
 use map::tcod::{Color, colors};
@@ -12,10 +13,11 @@ const MAP_WIDTH: i32 = 80;
 const MAP_HEIGHT: i32 = 45;
 const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic;
 const FOV_LIGHT_WALLS: bool = true;
-const UNSEEN_COLOR: Color = colors::DARKEST_GREY;
+const UNSEEN_COLOR: Color = colors::DARKER_SEPIA;
 const ROOM_MAX_SIZE: i32 = 10;
 const ROOM_MIN_SIZE: i32 = 6;
 const MAX_ROOMS: i32 = 30;
+const MAX_ROOM_MONSTERS: i32 = 3;
 
 pub struct Map {
     pub tiles: Vec<Vec<Tile>>,
@@ -87,12 +89,12 @@ impl Map {
         }
     }
 
-    pub fn calculate_fov(&mut self, x: i32, y: i32, radius: i32) {
-        self.fov_map.compute_fov(x, y, radius, FOV_LIGHT_WALLS, FOV_ALGO);
+    pub fn calculate_fov(&mut self, pos: (i32, i32), radius: i32) {
+        self.fov_map.compute_fov(pos.0, pos.1, radius, FOV_LIGHT_WALLS, FOV_ALGO);
     }
 
-    pub fn is_in_fov(&self, x: i32, y: i32) -> bool {
-        self.fov_map.is_in_fov(x, y)
+    pub fn is_in_fov(&self, pos: (i32, i32)) -> bool {
+        self.fov_map.is_in_fov(pos.0, pos.1)
     }
 
     /// Randomly generates a new map.
@@ -100,7 +102,7 @@ impl Map {
     /// Generates a map of rectangular rooms between
     /// ROOM_MIN_SIZE and ROOM_MAX_SIZE size and up to
     /// MAX_ROOMS rooms.
-    pub fn generate_map(&mut self) -> (i32, i32) {
+    pub fn generate_map(&mut self, objects: &mut Vec<Object>) -> (i32, i32) {
         self.tiles = vec![vec![Tile::wall(); self.height as usize]; self.width as usize];
 
         let mut rooms : Vec<Rect> = vec![];
@@ -136,6 +138,8 @@ impl Map {
                         self.create_v_tunnel(prev_y, new_y, prev_x);
                         self.create_h_tunnel(prev_x, new_x, new_y);
                     }
+
+                    self.place_objects(&room, objects);
                 }
                 rooms.push(room);
             }
@@ -143,6 +147,26 @@ impl Map {
 
         self.generate_fov_map();
         starting_position
+    }
+
+    fn place_objects(&mut self, room: &Rect, objects: &mut Vec<Object>) {
+        let mut rng = rand::thread_rng();
+        let rand_monsters = Uniform::new(0, MAX_ROOM_MONSTERS + 1);
+        let rand_x = Uniform::new(room.x1 + 1, room.x2);
+        let rand_y = Uniform::new(room.y1 + 1, room.y2);
+
+        for _ in 0..rand_monsters.sample(&mut rng) {
+            let x = rand_x.sample(&mut rng);
+            let y = rand_y.sample(&mut rng);
+
+            let mut monster = if rand::random::<f32>() < 0.8 {
+                Object::new(x, y, 'o', None, Some(colors::DESATURATED_GREEN), "Orc".to_string(), true)
+            } else {
+                Object::new(x, y, 'T', None, Some(colors::DARKER_GREEN), "Troll".to_string(), true)
+            };
+
+            objects.push(monster);
+        }
     }
 
     /// Updates the FOV_MAP so that the fov can be correctly

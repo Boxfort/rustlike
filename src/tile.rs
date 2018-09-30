@@ -18,8 +18,8 @@ impl Tile {
             blocked: false,
             block_sight: false,
             character: ' ',
-            background_color: colors::BLACK,
-            foreground_color: colors::BLACK,
+            background_color: colors::DARKEST_SEPIA,
+            foreground_color: colors::DARKEST_SEPIA,
             explored: false,
         }
     }
@@ -29,8 +29,8 @@ impl Tile {
             blocked: true,
             block_sight: true,
             character: '#',
-            background_color: colors::GREY,
-            foreground_color: colors::GREY,
+            background_color: colors::DARK_SEPIA,
+            foreground_color: colors::DARK_SEPIA,
             explored: false,
         }
     }
