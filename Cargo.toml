@@ -5,3 +5,4 @@ authors = ["Boxfort <jackwanderson@protonmail.com>"]
 
 [dependencies]
 tcod = "0.12.1"
+rand = "0.5.5"

@@ -5,8 +5,8 @@ use object::tcod::Color;
 use super::map::Map;
 
 pub struct Object {
-    x: i32,
-    y: i32,
+    pub x: i32,
+    pub y: i32,
     character: char,
     color: Color,
 }

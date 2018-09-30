@@ -7,7 +7,8 @@ pub struct Tile {
     pub blocked: bool,
     pub block_sight: bool,
     pub character: char,
-    pub color: Color,
+    pub background_color: Color,
+    pub foreground_color: Color,
 }
 
 impl Tile {
@@ -16,7 +17,8 @@ impl Tile {
             blocked: false,
             block_sight: false,
             character: ' ',
-            color: colors::BLACK,
+            background_color: colors::BLACK,
+            foreground_color: colors::BLACK,
         }
     }
 
@@ -25,7 +27,8 @@ impl Tile {
             blocked: true,
             block_sight: true,
             character: '#',
-            color: colors::GREY,
+            background_color: colors::GREY,
+            foreground_color: colors::GREY,
         }
     }
 }
