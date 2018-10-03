@@ -11,10 +11,13 @@ use super::components::{
                     AiComponent,
                 };
 
+use std::cell::RefCell;
+use std::cell::RefMut;
+
 #[derive(Clone)]
 pub struct Object{
     renderer: RenderComponent,
-    pub transform: TransformComponent,
+    transform: RefCell<TransformComponent>,
     stats: Option<StatsComponent>,
     pub ai: Option<Box<AiComponent>>,
     pub name: String,
@@ -37,7 +40,7 @@ impl Object {
         let renderer = RenderComponent::new(character,
                                             background_color,
                                             foreground_color);
-        let transform = TransformComponent::new(x, y);
+        let transform = RefCell::new(TransformComponent::new(x, y));
 
         Object {
             renderer,
@@ -51,22 +54,26 @@ impl Object {
     }
 
     pub fn position(&self) -> (i32, i32) {
-        self.transform.position()
+        self.transform.borrow().position()
+    }
+
+    pub fn transform(&self) -> RefMut<TransformComponent> {
+        self.transform.borrow_mut()
     }
 
     pub fn set_position(&mut self, x: i32, y: i32) {
-        self.transform.set_position(x,y);
+        self.transform.borrow_mut().set_position(x,y);
     }
 
     pub fn distance_to(&self, target: (i32, i32)) -> f32 {
-        self.transform.distance_to(target)
+        self.transform.borrow().distance_to(target)
     }
 
     pub fn draw(&self, con: &mut Console) {
-        self.renderer.draw(con, self.transform.position().0, self.transform.position().1);
+        self.renderer.draw(con, self.transform.borrow().position().0, self.transform.borrow().position().1);
     }
 
     pub fn clear(&self, con: &mut Console) {
-        self.renderer.clear(con, self.transform.position().0, self.transform.position().1);
+        self.renderer.clear(con, self.transform.borrow().position().0, self.transform.borrow().position().1);
     }
 }

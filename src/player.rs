@@ -42,21 +42,6 @@ impl Player {
         println!("Player attacks {}", objects[other].name);
     }
 
-    /// Move the player by (dx, dy)
-    ///
-    /// If the destination is blocked by a wall or impassible object the
-    /// player will not move.
-    fn move_by(&mut self, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
-        if !self.is_blocked(self.transform.position().0 + dx,
-                            self.transform.position().1 + dy,
-                            map,
-                            objects) {
-            let position = self.transform.position();
-            self.transform.set_position(position.0 + dx,
-                                        position.1 + dy);
-        }
-    }
-
     pub fn move_or_attack(&mut self, dx: i32, dy: i32, map: &Map, objects: &mut Vec<Object>) {
         let x = self.position().0 + dx;
         let y = self.position().1 + dy;
@@ -67,18 +52,8 @@ impl Player {
 
         match target_id {
             Some(target_id) => self.attack(target_id, objects),
-            None => self.move_by(dx, dy, map, objects),
+            None => self.transform.move_by(-1, dx, dy, map, objects),
         }
-    }
-
-    fn is_blocked(&self, x: i32, y: i32, map: &Map, objects: &Vec<Object>) -> bool {
-        if map.tiles[x as usize][y as usize].blocked {
-            return true;
-        }
-
-        objects.iter().any(|object| {
-            object.blocking && object.position() == (x, y)
-        })
     }
 
     pub fn position(&self) -> (i32, i32) {

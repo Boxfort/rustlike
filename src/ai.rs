@@ -22,7 +22,8 @@ fn move_towards(id: usize,
     // movement ot hte map grid.
     let dx = (dx as f32 / distance).round() as i32;
     let dy = (dy as f32 / distance).round() as i32;
-    objects[id].transform.move_by(dx, dy, map, objects);
+    // FIXME: PLEASE
+    objects[id].transform().move_by(id as i32, dx, dy, map, objects);
 }
 
 #[derive(Clone)]
