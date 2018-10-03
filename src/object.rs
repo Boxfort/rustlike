@@ -3,14 +3,20 @@ extern crate tcod;
 use object::tcod::console::*;
 use object::tcod::Color;
 use super::map::Map;
+use super::player::Player;
 use super::components::{
                     RenderComponent,
-                    TransformComponent
+                    TransformComponent,
+                    StatsComponent,
+                    AiComponent,
                 };
 
-pub struct Object {
+#[derive(Clone)]
+pub struct Object{
     renderer: RenderComponent,
-    transform: TransformComponent,
+    pub transform: TransformComponent,
+    stats: Option<StatsComponent>,
+    pub ai: Option<Box<AiComponent>>,
     pub name: String,
     pub blocking: bool,
     pub alive: bool,
@@ -23,6 +29,8 @@ impl Object {
             character: char,
             background_color: Option<Color>,
             foreground_color: Option<Color>,
+            stats: Option<StatsComponent>,
+            ai: Option<Box<AiComponent>>,
             name: String,
             blocking: bool) -> Self {
 
@@ -34,24 +42,12 @@ impl Object {
         Object {
             renderer,
             transform,
+            stats,
+            ai,
             name: name,
             blocking: blocking,
             alive: false,
         }
-    }
-
-    pub fn attack(&mut self, other: usize, objects: &mut Vec<Object>) {
-        println!("{} attacks {}", self.name, objects[other].name);
-    }
-
-    fn is_blocked(&self, x: i32, y: i32, map: &Map, objects: &Vec<Object>) -> bool {
-        if map.tiles[x as usize][y as usize].blocked {
-            return true;
-        }
-
-        objects.iter().any(|object| {
-            object.blocking && object.position() == (x, y)
-        })
     }
 
     pub fn position(&self) -> (i32, i32) {
@@ -60,6 +56,10 @@ impl Object {
 
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.transform.set_position(x,y);
+    }
+
+    pub fn distance_to(&self, target: (i32, i32)) -> f32 {
+        self.transform.distance_to(target)
     }
 
     pub fn draw(&self, con: &mut Console) {

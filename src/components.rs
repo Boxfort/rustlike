@@ -3,16 +3,39 @@ extern crate tcod;
 use components::tcod::console::Console;
 use components::tcod::console::BackgroundFlag;
 use components::tcod::colors::Color;
+use super::object::Object;
+use super::map::Map;
+use super::player::Player;
 
+#[derive(Clone)]
 pub struct RenderComponent {
     character: char,
     background_color: Option<Color>,
     foreground_color: Option<Color>,
 }
 
+#[derive(Clone)]
 pub struct TransformComponent {
     x: i32,
     y: i32,
+}
+
+#[derive(Clone)]
+pub struct StatsComponent {
+    pub max_hp: i32,
+    pub hp: i32,
+    pub defence: i32,
+    pub power: i32,
+}
+
+pub trait AiComponent {
+    fn take_turn(&self,
+                 id: usize,
+                 map: &mut Map,
+                 objects: &mut Vec<Object>,
+                 player: &mut Player);
+
+    fn box_clone(&self) -> Box<AiComponent>;
 }
 
 impl RenderComponent {
@@ -66,5 +89,44 @@ impl TransformComponent {
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.x = x;
         self.y = y;
+    }
+
+    pub fn distance_to(&self, other: (i32, i32)) -> f32 {
+        let dx = other.0 - self.x;
+        let dy = other.1 - self.y;
+        ((dx.pow(2) + dy.pow(2)) as f32).sqrt()
+    }
+
+    pub fn move_by(&mut self, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
+        if !self.is_blocked(self.position().0 + dx,
+                            self.position().1 + dy,
+                            map,
+                            objects) {
+            let position = self.position();
+            self.set_position(position.0 + dx,
+                                        position.1 + dy);
+        }
+    }
+
+    fn is_blocked(&self, x: i32, y: i32, map: &Map, objects: &Vec<Object>) -> bool {
+        if map.tiles[x as usize][y as usize].blocked {
+            return true;
+        }
+
+        objects.iter().any(|object| {
+            object.blocking && object.position() == (x, y)
+        })
+    }
+
+}
+
+impl StatsComponent {
+    pub fn new(max_hp: i32, hp: i32, defence: i32, power: i32) -> Self {
+        StatsComponent {
+            max_hp,
+            hp,
+            defence,
+            power,
+        }
     }
 }

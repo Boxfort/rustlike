@@ -3,6 +3,8 @@ extern crate rand;
 
 use super::tile::Tile;
 use super::object::Object;
+use super::components::{StatsComponent};
+use super::ai::*;
 use map::tcod::console::*;
 use map::tcod::map::{Map as FovMap, FovAlgorithm};
 use map::tcod::{Color, colors};
@@ -162,9 +164,25 @@ impl Map {
             let y = rand_y.sample(&mut rng);
 
             let mut monster = if rand::random::<f32>() < 0.8 {
-                Object::new(x, y, 'o', None, Some(colors::DESATURATED_GREEN), "Orc".to_string(), true)
+                Object::new(x,
+                            y,
+                            'o',
+                            None,
+                            Some(colors::DESATURATED_GREEN),
+                            Some(StatsComponent::new(10,10,0,3)),
+                            Some(Box::new(AiMonster)),
+                            "Orc".to_string(),
+                            true)
             } else {
-                Object::new(x, y, 'T', None, Some(colors::DARKER_GREEN), "Troll".to_string(), true)
+                Object::new(x,
+                            y,
+                            'T',
+                            None,
+                            Some(colors::DARKER_GREEN),
+                            Some(StatsComponent::new(10,10,0,3)),
+                            Some(Box::new(AiMonster)),
+                            "Troll".to_string(),
+                            true)
             };
 
             objects.push(monster);

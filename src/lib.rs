@@ -5,3 +5,4 @@ mod map;
 mod player_action;
 mod player;
 mod components;
+mod ai;

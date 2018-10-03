@@ -5,11 +5,14 @@ use super::object::Object;
 use super::map::Map;
 use super::player_action::PlayerAction;
 use super::player::Player;
+use super::components::{
+                    StatsComponent,
+                    AiComponent
+                };
 use core::tcod::console::*;
 use core::tcod::input::Key;
 use core::tcod::input::KeyCode::*;
 use core::tcod::colors;
-use core::rand::distributions::{Distribution, Uniform};
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
@@ -38,7 +41,7 @@ impl Game {
             .init();
 
         let console = Box::new(Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT));
-        let player = Player::new(25, 23);
+        let player = Player::new(25, 23, StatsComponent::new(30,30,2,5));
         let map = Map::new();
 
         Game {
@@ -83,8 +86,18 @@ impl Game {
             }
 
             if self.player.is_alive() && player_action != PlayerAction::DidntTakeTurn {
-                for i in 1..self.objects.len() {
-                    println!("The {} growls.", self.objects[i].name);
+                for i in 0..self.objects.len() {
+                    if self.objects[i].ai.is_some() {
+                        self.objects[i].clone()
+                                       .ai
+                                       .as_ref()
+                                       .unwrap()
+                                       .take_turn(i as usize,
+                                                  &mut self.map,
+                                                  &mut self.objects,
+                                                  &mut self.player);
+                        println!("Running ai for {} - {}", i, self.objects[i].name)
+                    }
                 }
             }
         }
