@@ -12,9 +12,6 @@ use super::components::{
                     AiComponent,
                 };
 
-use std::cell::RefCell;
-use std::cell::RefMut;
-
 #[derive(Clone)]
 pub struct Object{
     renderer: RenderComponent,
