@@ -9,9 +9,9 @@ use super::player::Player;
 
 #[derive(Clone)]
 pub struct RenderComponent {
-    character: char,
-    background_color: Option<Color>,
-    foreground_color: Option<Color>,
+    pub character: char,
+    pub background_color: Option<Color>,
+    pub foreground_color: Option<Color>,
 }
 
 #[derive(Clone)]

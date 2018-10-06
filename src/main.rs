@@ -6,6 +6,7 @@ mod player_action;
 mod player;
 mod components;
 mod ai;
+mod gui;
 
 fn main() {
     let mut game = core::Game::new();

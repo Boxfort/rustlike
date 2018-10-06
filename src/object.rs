@@ -2,6 +2,7 @@ extern crate tcod;
 
 use object::tcod::console::*;
 use object::tcod::Color;
+use object::tcod::colors;
 use super::map::Map;
 use super::player::Player;
 use super::components::{
@@ -57,6 +58,10 @@ impl Object {
         &self.stats
     }
 
+    pub fn is_alive(&self) -> bool {
+        self.alive
+    }
+
     pub fn position(&self) -> (i32, i32) {
         self.transform.position()
     }
@@ -82,6 +87,10 @@ impl Object {
     pub fn take_damage(&mut self, damage: i32) {
         if self.stats.is_some() {
             self.stats.as_mut().unwrap().hp -= damage;
+
+            if self.stats.as_mut().unwrap().hp <= 0 {
+                self.on_death();
+            }
         }
     }
 
@@ -117,5 +126,14 @@ impl Object {
 
     pub fn clear(&self, con: &mut Console) {
         self.renderer.clear(con, self.transform.position().0, self.transform.position().1);
+    }
+
+    fn on_death(&mut self) {
+        self.alive = false;
+        self.blocking = false;
+        self.stats = None;
+        self.ai = None;
+        self.renderer.character = '%';
+        self.renderer.background_color = Some(colors::DESATURATED_RED);
     }
 }

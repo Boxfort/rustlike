@@ -25,7 +25,7 @@ pub struct Player {
 
 impl Player {
     pub fn new(x: i32, y: i32, stats: StatsComponent) -> Self {
-        let renderer = RenderComponent::new(PLAYER_CHAR, Some(colors::DESATURATED_RED), Some(PLAYER_COLOR));
+        let renderer = RenderComponent::new(PLAYER_CHAR, None, Some(PLAYER_COLOR));
         let transform = TransformComponent::new(x, y);
 
         Player {
@@ -43,7 +43,10 @@ impl Player {
         let y = self.position().1 + dy;
 
         let target_id = objects.iter().position(|object| {
-            object.position() == (x,y)
+            match object.is_alive() {
+                true => object.position() == (x,y),
+                false => false,
+            }
         });
 
         match target_id {
@@ -62,6 +65,10 @@ impl Player {
 
     pub fn take_damage(&mut self, damage: i32) {
         self.stats.hp -= damage;
+
+        if self.stats.hp <= 0 {
+            self.on_death();
+        }
     }
 
     pub fn attack(&self, object: &mut Object) {
@@ -70,7 +77,7 @@ impl Player {
             let damage = self.stats.power - object.stats().as_ref().unwrap().defence;
 
             // Apply damage.
-            object.take_damage(damage)
+            object.take_damage(damage);
         }
     }
 
@@ -88,5 +95,10 @@ impl Player {
 
     pub fn is_alive(&self) -> bool {
         self.alive
+    }
+
+    fn on_death(&mut self) {
+        self.alive = false;
+        println!("Player dead.")
     }
 }

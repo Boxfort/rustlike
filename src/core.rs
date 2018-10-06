@@ -13,6 +13,7 @@ use core::tcod::console::*;
 use core::tcod::input::Key;
 use core::tcod::input::KeyCode::*;
 use core::tcod::colors;
+use gui;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
@@ -25,6 +26,7 @@ pub struct Game {
     fps: i32,
     root: Root,
     console: Box<Console>,
+    gui: Box<Console>,
     player: Player,
     objects: Vec<Object>,
     objects_next: Vec<Object>,
@@ -42,6 +44,7 @@ impl Game {
             .init();
 
         let console = Box::new(Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT));
+        let gui = Box::new(Offscreen::new(SCREEN_WIDTH, 7));
         let player = Player::new(25, 23, StatsComponent::new(30,30,2,5));
         let map = Map::new();
 
@@ -51,6 +54,7 @@ impl Game {
             fps: LIMIT_FPS,
             root: root,
             console: console,
+            gui: gui,
             player,
             objects: vec![],
             objects_next: vec![],
@@ -75,7 +79,7 @@ impl Game {
 
             self.draw_everything();
             self.root.flush();
-            self.clear_objects();
+            self.clear_everything();
 
             // if the player has moved
             let current_player_position = self.objects[PLAYER].position();
@@ -115,16 +119,27 @@ impl Game {
             self.map.draw(&mut self.console);
         }
 
-        for i in 0..self.objects.len() {
-            // Only draw the object if we can see it.
-            if self.map.is_in_fov(self.objects[i].position()) {
-                self.objects[i].draw(&mut self.console);
-            }
+        // Collect the objects which can be seen
+        let mut to_draw: Vec<_> = self.objects.iter()
+                                                   .filter(|o| self.map.is_in_fov(o.position()))
+                                                   .collect();
+
+        // Sort the objects so that blocking objects are drawn last
+        to_draw.sort_by(|o1, o2| { o1.blocking.cmp(&o2.blocking) });
+
+        for object in &to_draw {
+            object.draw(&mut self.console);
         }
 
         self.player.draw(&mut self.console);
 
+        // Draw GUI
+        self.gui.set_default_background(colors::BLACK);
+        self.gui.clear();
+        gui::render_bar(&mut self.gui, 1, 1, 20, "HP", self.player.stats().hp, self.player.stats().max_hp, colors::LIGHT_RED, colors::DARKER_RED);
+
         blit(&mut self.console, (0,0), (SCREEN_WIDTH, SCREEN_HEIGHT), &mut self.root, (0,0), 1.0, 1.0);
+        blit(&mut self.gui, (0,0), (SCREEN_WIDTH, 7), &mut self.root, (0,SCREEN_HEIGHT - 7), 1.0, 1.0);
 
         // show the player's stats
         self.root.print_ex(1, SCREEN_HEIGHT - 2, BackgroundFlag::None, TextAlignment::Left,
@@ -132,7 +147,7 @@ impl Game {
     }
 
     /// Clears the player and all objects
-    fn clear_objects(&mut self) {
+    fn clear_everything(&mut self) {
         for i in 0..self.objects.len() {
             self.objects[i].clear(&mut self.console);
         }

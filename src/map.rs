@@ -12,7 +12,7 @@ use map::rand::distributions::{Distribution, Uniform};
 use std::cmp;
 
 const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 45;
+const MAP_HEIGHT: i32 = 43;
 const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic;
 const FOV_LIGHT_WALLS: bool = true;
 const UNSEEN_COLOR: Color = colors::DARKER_SEPIA;
@@ -185,6 +185,7 @@ impl Map {
                             true)
             };
 
+            monster.alive = true;
             objects.push(monster);
         }
     }
