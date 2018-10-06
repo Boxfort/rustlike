@@ -27,6 +27,7 @@ pub struct Game {
     console: Box<Console>,
     player: Player,
     objects: Vec<Object>,
+    objects_next: Vec<Object>,
     map: Map,
     fov_recompute: bool,
 }
@@ -52,6 +53,7 @@ impl Game {
             console: console,
             player,
             objects: vec![],
+            objects_next: vec![],
             map: map,
             fov_recompute: true,
         }
@@ -61,6 +63,10 @@ impl Game {
     pub fn run(&mut self) {
         let mut prev_player_position = (-1, -1);
         let start = self.map.generate_map(&mut self.objects);
+
+        // Copy the state of the objects to the next
+        self.objects_next.clone_from(&self.objects);
+
         self.player.set_position(start.0, start.1);
 
         while !self.root.window_closed() {
@@ -86,19 +92,18 @@ impl Game {
             }
 
             if self.player.is_alive() && player_action != PlayerAction::DidntTakeTurn {
-                for i in 0..self.objects.len() {
-                    if self.objects[i].ai.is_some() {
-                        self.objects[i].clone()
-                                       .ai
-                                       .as_ref()
-                                       .unwrap()
-                                       .take_turn(i as usize,
-                                                  &mut self.map,
-                                                  &mut self.objects,
-                                                  &mut self.player);
-                        println!("Running ai for {} - {}", i, self.objects[i].name)
-                    }
+                for (i, object) in self.objects.iter_mut().enumerate() {
+                    object.take_turn(&mut self.map,
+                                     &mut self.objects_next,
+                                     &mut self.player);
+
+                    // Copy the updated object into the next state.
+                    self.objects_next[i].clone_from(object);
+                    println!("Running ai for {} - {}", i, object.name)
                 }
+
+                // Copy back the changed states.
+                self.objects.clone_from(&self.objects_next);
             }
         }
     }

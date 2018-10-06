@@ -52,7 +52,7 @@ impl Player {
 
         match target_id {
             Some(target_id) => self.attack(target_id, objects),
-            None => self.transform.move_by(-1, dx, dy, map, objects),
+            None => self.transform.move_by(dx, dy, map, objects),
         }
     }
 

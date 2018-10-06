@@ -30,7 +30,7 @@ pub struct StatsComponent {
 
 pub trait AiComponent {
     fn take_turn(&self,
-                 id: usize,
+                 object: &mut Object,
                  map: &mut Map,
                  objects: &mut Vec<Object>,
                  player: &mut Player);
@@ -97,9 +97,8 @@ impl TransformComponent {
         ((dx.pow(2) + dy.pow(2)) as f32).sqrt()
     }
 
-    pub fn move_by(&mut self, id: i32, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
-        if !self.is_blocked(id,
-                            self.position().0 + dx,
+    pub fn move_by(&mut self, dx: i32, dy: i32, map: &Map, objects: &Vec<Object>) {
+        if !self.is_blocked(self.position().0 + dx,
                             self.position().1 + dy,
                             map,
                             objects) {
@@ -109,21 +108,14 @@ impl TransformComponent {
         }
     }
 
-    fn is_blocked(&self, id: i32, x: i32, y: i32, map: &Map, objects: &Vec<Object>) -> bool {
+    fn is_blocked(&self, x: i32, y: i32, map: &Map, objects: &Vec<Object>) -> bool {
         if map.tiles[x as usize][y as usize].blocked {
             return true;
         }
 
-        for i in 0..objects.len() {
-            // Don't check self of the RefCell in Object will be borrowed twice.
-            if i as i32 == id { continue }
-
-            if objects[i].blocking && objects[i].position() == (x, y) {
-                return true
-            }
-        }
-
-        false
+        objects.iter().any(|object| {
+            object.blocking && object.position() == (x, y)
+        })
     }
 }
 

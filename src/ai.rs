@@ -8,13 +8,13 @@ use super::components::AiComponent;
 // into a utils file probably.
 
 /// Gets the next location to move towards to reach the target.
-fn move_towards(id: usize,
+fn move_towards(object: &mut Object,
                 target: (i32, i32),
                 map: &Map,
                 objects: &mut Vec<Object>) {
     // Get the distance to the target from the current positon
-    let dx = target.0 - objects[id].position().0;
-    let dy = target.1 - objects[id].position().1;
+    let dx = target.0 - object.position().0;
+    let dy = target.1 - object.position().1;
     let distance = ((dx.pow(2) + dy.pow(2)) as f32).sqrt();
 
     // normalize the distance to length 1 (preserving direction)
@@ -23,7 +23,7 @@ fn move_towards(id: usize,
     let dx = (dx as f32 / distance).round() as i32;
     let dy = (dy as f32 / distance).round() as i32;
     // FIXME: PLEASE
-    objects[id].transform().move_by(id as i32, dx, dy, map, objects);
+    object.move_by(dx, dy, map, objects);
 }
 
 #[derive(Clone)]
@@ -31,18 +31,18 @@ pub struct AiMonster;
 
 impl AiComponent for AiMonster {
     fn take_turn(&self,
-                 monster_id: usize,
+                 object: &mut Object,
                  map: &mut Map,
                  objects: &mut Vec<Object>,
                  player: &mut Player) {
         // a basic monster takes its turn. If you can see it, it can see you
-        if map.is_in_fov(objects[monster_id].position()) {
-            if objects[monster_id].distance_to(player.position()) >= 2.0 {
+        if map.is_in_fov(object.position()) {
+            if object.distance_to(player.position()) >= 2.0 {
                 // move towards player if far away
-                move_towards(monster_id, player.position(), map, objects);
+                move_towards(object, player.position(), map, objects);
             } else if player.stats().hp > 0 {
                 // close enough, attack! (if the player is still alive.)
-                println!("The attack of the {} bounces off your shiny metal armor!", objects[monster_id].name);
+                println!("The attack of the {} bounces off your shiny metal armor!", object.name);
             }
         }
     }
