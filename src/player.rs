@@ -38,10 +38,6 @@ impl Player {
         }
     }
 
-    fn attack(&mut self, other: usize, objects: &mut Vec<Object>) {
-        println!("Player attacks {}", objects[other].name);
-    }
-
     pub fn move_or_attack(&mut self, dx: i32, dy: i32, map: &Map, objects: &mut Vec<Object>) {
         let x = self.position().0 + dx;
         let y = self.position().1 + dy;
@@ -51,7 +47,7 @@ impl Player {
         });
 
         match target_id {
-            Some(target_id) => self.attack(target_id, objects),
+            Some(target_id) => self.attack(&mut objects[target_id]),
             None => self.transform.move_by(dx, dy, map, objects),
         }
     }
@@ -62,6 +58,20 @@ impl Player {
 
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.transform.set_position(x,y);
+    }
+
+    pub fn take_damage(&mut self, damage: i32) {
+        self.stats.hp -= damage;
+    }
+
+    pub fn attack(&self, object: &mut Object) {
+        if object.stats().is_some() {
+            // Calculate damage
+            let damage = self.stats.power - object.stats().as_ref().unwrap().defence;
+
+            // Apply damage.
+            object.take_damage(damage)
+        }
     }
 
     pub fn stats(&self) -> &StatsComponent {

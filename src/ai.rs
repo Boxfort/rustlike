@@ -22,7 +22,6 @@ fn move_towards(object: &mut Object,
     // movement ot hte map grid.
     let dx = (dx as f32 / distance).round() as i32;
     let dy = (dy as f32 / distance).round() as i32;
-    // FIXME: PLEASE
     object.move_by(dx, dy, map, objects);
 }
 
@@ -42,7 +41,7 @@ impl AiComponent for AiMonster {
                 move_towards(object, player.position(), map, objects);
             } else if player.stats().hp > 0 {
                 // close enough, attack! (if the player is still alive.)
-                println!("The attack of the {} bounces off your shiny metal armor!", object.name);
+                object.attack(player);
             }
         }
     }

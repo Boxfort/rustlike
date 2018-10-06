@@ -125,6 +125,10 @@ impl Game {
         self.player.draw(&mut self.console);
 
         blit(&mut self.console, (0,0), (SCREEN_WIDTH, SCREEN_HEIGHT), &mut self.root, (0,0), 1.0, 1.0);
+
+        // show the player's stats
+        self.root.print_ex(1, SCREEN_HEIGHT - 2, BackgroundFlag::None, TextAlignment::Left,
+                         format!("HP: {}/{} ", self.player.stats().hp, self.player.stats().max_hp));
     }
 
     /// Clears the player and all objects

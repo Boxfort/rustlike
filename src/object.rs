@@ -53,6 +53,10 @@ impl Object {
         }
     }
 
+    pub fn stats(&self) -> &Option<StatsComponent> {
+        &self.stats
+    }
+
     pub fn position(&self) -> (i32, i32) {
         self.transform.position()
     }
@@ -72,6 +76,34 @@ impl Object {
                 .unwrap()
                 .clone()
                 .take_turn(self, map, objects, player);
+        }
+    }
+
+    pub fn take_damage(&mut self, damage: i32) {
+        if self.stats.is_some() {
+            self.stats.as_mut().unwrap().hp -= damage;
+        }
+    }
+
+    // TODO: This all really needs to be reworked. this should accept
+    // some struct that implements 'Attackable' (or something similar)
+    // having a statscomponent should be cause enough to fight something.
+    // A stats component could be passed in but it wouldnt make sense,
+    // and there would be no abstraction allowing for gear and whatnot?
+    // Player could be made into an object in future probably if it
+    // doesnt require any custom code in it.
+    //
+    // decide also at what level the damage calculations should be done
+    // on the attackers side or on the defenders side. Probably doesnt matter.
+    //
+    // Decide something for the love of god.
+    pub fn attack(&self, player: &mut Player) {
+        if self.stats.is_some() {
+            // Calculate damage
+            let damage = self.stats.as_ref().unwrap().power - player.stats().defence;
+
+            // Apply damage.
+            player.take_damage(damage)
         }
     }
 
