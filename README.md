@@ -20,6 +20,7 @@ Rustlike is a roguelike written in rust with [tcod-rs](https://github.com/tomass
 
 ## Requirements
 - [Rust](https://www.rust-lang.org/en-US/install.html)
+- libsdl1.2-dev
 - libsdl2-dev
 
 ## Building From Source
