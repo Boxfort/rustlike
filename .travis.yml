@@ -10,6 +10,8 @@ matrix:
     - rust: nightly
   fast_finish: true
 before_install:
+  - sudo apt-get install -f libegl1-mesa-dev;
+  - sudo apt-get install -f libgles2-mesa-dev;
   - sudo apt-get install -f libsdl2-dev;
 script:
   - cargo build --verbose --all
