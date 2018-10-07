@@ -1,3 +1,6 @@
+extern crate tcod;
+
+use ai::tcod::Color;
 use super::object::Object;
 use super::map::Map;
 use super::player::Player;
@@ -33,7 +36,9 @@ impl AiComponent for AiMonster {
                  object: &mut Object,
                  map: &mut Map,
                  objects: &mut Vec<Object>,
-                 player: &mut Player) {
+                 player: &mut Player,
+                 messages: &mut Vec<(String, Color)>)
+    {
         // a basic monster takes its turn. If you can see it, it can see you
         if map.is_in_fov(object.position()) {
             if object.distance_to(player.position()) >= 2.0 {
@@ -41,7 +46,7 @@ impl AiComponent for AiMonster {
                 move_towards(object, player.position(), map, objects);
             } else if player.stats().hp > 0 {
                 // close enough, attack! (if the player is still alive.)
-                object.attack(player);
+                object.attack(player, messages);
             }
         }
     }

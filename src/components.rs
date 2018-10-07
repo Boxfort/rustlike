@@ -33,7 +33,8 @@ pub trait AiComponent {
                  object: &mut Object,
                  map: &mut Map,
                  objects: &mut Vec<Object>,
-                 player: &mut Player);
+                 player: &mut Player,
+                 messages: &mut Vec<(String, Color)>);
 
     fn box_clone(&self) -> Box<AiComponent>;
 }

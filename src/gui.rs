@@ -75,7 +75,7 @@ impl Gui {
                                           0,
                                           vec![],
                                           22,
-                                          screen_height - 7,
+                                          screen_height - 6,
                                           screen_width - 22,
                                           6);
 
@@ -158,6 +158,7 @@ impl MessageLog {
 
 impl GuiElement for MessageLog {
     fn draw(&mut self, root: &mut Root) {
+        self.console.clear();
         let mut y = self.console_height - 1;
         for (msg, color) in self.messages.iter().rev() {
             let msg_height = self.console

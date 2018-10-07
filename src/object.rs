@@ -71,13 +71,13 @@ impl Object {
         self.transform.move_by(dx, dy, map, objects);
     }
 
-    pub fn take_turn(&mut self, map: &mut Map, objects: &mut Vec<Object>, player: &mut Player ) {
+    pub fn take_turn(&mut self, map: &mut Map, objects: &mut Vec<Object>, player: &mut Player, messages: &mut Vec<(String, Color)>) {
         if self.ai.is_some() {
             self.ai
                 .as_ref()
                 .unwrap()
                 .clone()
-                .take_turn(self, map, objects, player);
+                .take_turn(self, map, objects, player, messages);
         }
     }
 
@@ -103,13 +103,14 @@ impl Object {
     // on the attackers side or on the defenders side. Probably doesnt matter.
     //
     // Decide something for the love of god.
-    pub fn attack(&self, player: &mut Player) {
+    pub fn attack(&self, player: &mut Player, messages: &mut Vec<(String, Color)>) {
         if self.stats.is_some() {
             // Calculate damage
             let damage = self.stats.as_ref().unwrap().power - player.stats().defence;
 
             // Apply damage.
-            player.take_damage(damage)
+            player.take_damage(damage, messages);
+            messages.push((format!("{} attacks you for {} damage", self.name, damage), colors::RED));
         }
     }
 

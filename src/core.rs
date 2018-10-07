@@ -49,7 +49,7 @@ impl Game {
         let player = Player::new(25, 23, StatsComponent::new(30,30,2,5));
         let map = Map::new();
         let gui = Gui::new(SCREEN_WIDTH, SCREEN_HEIGHT, &player);
-        let messages: Vec<(String, Color)> = vec![("Fuck u".to_string(), colors::WHITE)];
+        let messages: Vec<(String, Color)> = vec![("Welcome to rustlike!".to_string(), colors::WHITE)];
 
         Game {
             width: SCREEN_WIDTH,
@@ -81,9 +81,9 @@ impl Game {
             self.root.set_default_background(colors::DARKEST_SEPIA);
             self.root.set_background_flag(BackgroundFlag::Set);
 
+            self.gui.update(&self.player, &self.messages);
             self.draw_everything();
             self.root.flush();
-            self.gui.update(&self.player, &self.messages);
             self.clear_everything();
 
             // if the player has moved
@@ -101,11 +101,11 @@ impl Game {
             }
 
             if self.player.is_alive() && player_action != PlayerAction::DidntTakeTurn {
-                self.messages.push(("Take a turn homeslice".to_string(), colors::WHITE));
                 for (i, object) in self.objects.iter_mut().enumerate() {
                     object.take_turn(&mut self.map,
                                      &mut self.objects_next,
-                                     &mut self.player);
+                                     &mut self.player,
+                                     &mut self.messages);
 
                     // Copy the updated object into the next state.
                     self.objects_next[i].clone_from(object);
@@ -167,19 +167,19 @@ impl Game {
 
             // movement keys
             (Key { code: Up, .. }, true) => {
-                self.player.move_or_attack(0, -1, &self.map, &mut self.objects);
+                self.player.move_or_attack(0, -1, &self.map, &mut self.objects, &mut self.messages);
                 PlayerAction::TookTurn
             },
             (Key { code: Down, .. }, true) => {
-                self.player.move_or_attack(0, 1, &self.map, &mut self.objects);
+                self.player.move_or_attack(0, 1, &self.map, &mut self.objects, &mut self.messages);
                 PlayerAction::TookTurn
             },
             (Key { code: Left, .. }, true) => {
-                self.player.move_or_attack(-1, 0, &self.map, &mut self.objects);
+                self.player.move_or_attack(-1, 0, &self.map, &mut self.objects, &mut self.messages);
                 PlayerAction::TookTurn
             },
             (Key { code: Right, .. }, true) => {
-                self.player.move_or_attack(1, 0, &self.map, &mut self.objects);
+                self.player.move_or_attack(1, 0, &self.map, &mut self.objects, &mut self.messages);
                 PlayerAction::TookTurn
             },
 
