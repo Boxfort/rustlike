@@ -13,4 +13,4 @@ before_install:
   - sudo apt-get install libsdl2-dev;
 script:
   - cargo build --verbose --all
-- cargo test --verbose --all
+  - cargo test --verbose --all
