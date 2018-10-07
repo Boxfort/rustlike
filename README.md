@@ -1,6 +1,8 @@
 # Rustlike [![Build Status](https://travis-ci.com/Boxfort/rustlike.svg?branch=master)](https://travis-ci.com/Boxfort/rustlike)
 Rustlike is a roguelike written in rust with [tcod-rs](https://github.com/tomassedovic/tcod-rs). (Name subject to change once I figure out what I wanna do with this project.)
 
+![Screenshot of rustlike](https://i.imgur.com/MuBAlGB.png)
+
 ### Current Features:
 - (Basic) Level Generation
 - (Basic) Ai
