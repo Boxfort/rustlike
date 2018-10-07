@@ -12,16 +12,22 @@ use super::player::Player;
 
 pub struct Gui {
     health_bar: ProgressBar,
+    message_log: MessageLog,
 }
 
 struct ProgressBar {
     x: i32,
     y: i32,
+    console_x: i32,
+    console_y: i32,
+    console_width: i32,
+    console_height: i32,
     bar_width: i32,
     value: i32,
     maximum: i32,
     full_color: Color,
     empty_color: Color,
+    name: String,
     console: Box<Console>,
 }
 
@@ -33,9 +39,19 @@ struct Text {
     console: Box<Console>,
 }
 
+struct MessageLog {
+    x: i32,
+    y: i32,
+    messages: Vec<(String, Color)>,
+    console_x: i32,
+    console_y: i32,
+    console_width: i32,
+    console_height: i32,
+    console: Box<Console>,
+}
+
 trait GuiElement {
-    fn draw(&mut self, root: &mut Root, screen_width: i32, screen_height: i32);
-    fn clear(&mut self);
+    fn draw(&mut self, root: &mut Root);
 }
 
 impl Gui {
@@ -44,61 +60,133 @@ impl Gui {
 
         let hp = ProgressBar::new(1,
                                   1,
+                                  0,
+                                  screen_height - 7,
                                   20,
                                   screen_width,
+                                  7,
                                   player.stats().hp,
                                   player.stats().max_hp,
                                   colors::LIGHT_RED,
-                                  colors::DARKER_RED);
+                                  colors::DARKER_RED,
+                                  "HP".to_string());
 
+        let message_log = MessageLog::new(0,
+                                          0,
+                                          vec![],
+                                          22,
+                                          screen_height - 7,
+                                          screen_width - 22,
+                                          6);
 
         Gui {
             health_bar: hp,
+            message_log: message_log,
         }
     }
 
-
-    pub fn draw(&mut self, root: &mut Root, screen_width: i32, screen_height: i32) {
-        self.health_bar.draw(root, screen_width, screen_height);
+    pub fn draw(&mut self, root: &mut Root) {
+        self.health_bar.draw(root);
+        self.message_log.draw(root);
     }
 
-    pub fn update(&mut self, player: &Player) {
+    pub fn update(&mut self, player: &Player, messages: &Vec<(String, Color)>) {
         self.health_bar.value = player.stats().hp;
-    }
-
-    pub fn clear(&mut self) {
-        self.health_bar.clear();
+        self.message_log.messages = messages.clone();
     }
 }
 
 impl ProgressBar {
     pub fn new(x: i32,
                y: i32,
+               console_x: i32,
+               console_y: i32,
                bar_width: i32,
                console_width: i32,
+               console_height: i32,
                value: i32,
                maximum: i32,
                full_color: Color,
-               empty_color: Color)
+               empty_color: Color,
+               name: String)
         -> Self
     {
-        let console = Box::new(Offscreen::new(console_width, 7));
+        let console = Box::new(Offscreen::new(console_width, console_height));
 
         ProgressBar {
             x,
             y,
+            console_x,
+            console_y,
+            console_width,
+            console_height,
             bar_width,
             value,
             maximum,
             full_color,
             empty_color,
+            name,
             console,
         }
     }
 }
 
+impl MessageLog {
+    pub fn new(x: i32,
+               y: i32,
+               messages: Vec<(String, Color)>,
+               console_x: i32,
+               console_y: i32,
+               console_width: i32,
+               console_height: i32)
+        -> Self
+    {
+        let console = Box::new(Offscreen::new(console_width, console_height));
+
+        MessageLog {
+            x,
+            y,
+            messages,
+            console_x,
+            console_y,
+            console_width,
+            console_height,
+            console,
+        }
+    }
+}
+
+impl GuiElement for MessageLog {
+    fn draw(&mut self, root: &mut Root) {
+        let mut y = self.console_height - 1;
+        for (msg, color) in self.messages.iter().rev() {
+            let msg_height = self.console
+                                 .get_height_rect(self.console_x,
+                                                  y,
+                                                  self.console_width,
+                                                  0,
+                                                  msg);
+            y -= msg_height;
+            if y < 0 {
+                break;
+            }
+
+            self.console.set_default_foreground(*color);
+            self.console.print_rect(self.x, y, self.console_width, 0, msg);
+
+            blit(&mut self.console,
+                 (0,0),
+                 (self.console_width, self.console_height),
+                 root,
+                 (self.console_x, self.console_y),
+                 1.0,
+                 1.0);
+        }
+    }
+}
+
 impl GuiElement for ProgressBar {
-    fn draw(&mut self, root: &mut Root, screen_width: i32, screen_height: i32) {
+    fn draw(&mut self, root: &mut Root) {
         self.console.set_default_background(colors::BLACK);
         self.console.clear();
 
@@ -128,13 +216,14 @@ impl GuiElement for ProgressBar {
         // show the player's stats
         self.console.set_default_foreground(colors::WHITE);
         self.console.print_ex(self.x, self.y + 2, BackgroundFlag::None, TextAlignment::Left,
-                         format!("HP: {}/{} ", self.value, self.maximum));
+                         format!("{}: {}/{} ", self.name, self.value, self.maximum));
 
-        blit(&mut self.console, (0,0), (screen_width, 7), root, (0, screen_height - 7), 1.0, 1.0);
-        println!("DRAWEN")
-    }
-
-    fn clear(&mut self) {
-        self.console.clear();
+        blit(&mut self.console,
+             (0,0),
+             (self.console_width, self.console_height),
+             root,
+             (self.console_x, self.console_y),
+             1.0,
+             1.0);
     }
 }

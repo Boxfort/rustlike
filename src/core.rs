@@ -14,6 +14,7 @@ use core::tcod::console::*;
 use core::tcod::input::Key;
 use core::tcod::input::KeyCode::*;
 use core::tcod::colors;
+use core::tcod::Color;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
@@ -27,6 +28,7 @@ pub struct Game {
     root: Root,
     console: Box<Console>,
     gui: Gui,
+    messages: Vec<(String, Color)>,
     player: Player,
     objects: Vec<Object>,
     objects_next: Vec<Object>,
@@ -47,6 +49,7 @@ impl Game {
         let player = Player::new(25, 23, StatsComponent::new(30,30,2,5));
         let map = Map::new();
         let gui = Gui::new(SCREEN_WIDTH, SCREEN_HEIGHT, &player);
+        let messages: Vec<(String, Color)> = vec![("Fuck u".to_string(), colors::WHITE)];
 
         Game {
             width: SCREEN_WIDTH,
@@ -55,6 +58,7 @@ impl Game {
             root,
             console,
             gui,
+            messages,
             player,
             objects: vec![],
             objects_next: vec![],
@@ -79,7 +83,7 @@ impl Game {
 
             self.draw_everything();
             self.root.flush();
-            self.gui.update(&self.player);
+            self.gui.update(&self.player, &self.messages);
             self.clear_everything();
 
             // if the player has moved
@@ -97,6 +101,7 @@ impl Game {
             }
 
             if self.player.is_alive() && player_action != PlayerAction::DidntTakeTurn {
+                self.messages.push(("Take a turn homeslice".to_string(), colors::WHITE));
                 for (i, object) in self.objects.iter_mut().enumerate() {
                     object.take_turn(&mut self.map,
                                      &mut self.objects_next,
@@ -136,7 +141,7 @@ impl Game {
 
         blit(&mut self.console, (0,0), (SCREEN_WIDTH, SCREEN_HEIGHT), &mut self.root, (0,0), 1.0, 1.0);
         // Draw GUI
-        self.gui.draw(&mut self.root, SCREEN_WIDTH, SCREEN_HEIGHT);
+        self.gui.draw(&mut self.root);
     }
 
     /// Clears the player and all objects
