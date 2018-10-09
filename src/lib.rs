@@ -7,3 +7,4 @@ mod player;
 mod components;
 mod ai;
 mod gui;
+mod item;

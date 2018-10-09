@@ -160,7 +160,7 @@ impl GuiElement for MessageLog {
     fn draw(&mut self, root: &mut Root) {
         self.console.clear();
         let mut y = self.console_height - 1;
-        for (msg, color) in self.messages.iter().rev() {
+        for &(ref msg, color) in self.messages.iter().rev() {
             let msg_height = self.console
                                  .get_height_rect(self.console_x,
                                                   y,
@@ -172,7 +172,7 @@ impl GuiElement for MessageLog {
                 break;
             }
 
-            self.console.set_default_foreground(*color);
+            self.console.set_default_foreground(color);
             self.console.print_rect(self.x, y, self.console_width, 0, msg);
 
             blit(&mut self.console,

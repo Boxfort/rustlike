@@ -7,6 +7,7 @@ mod player;
 mod components;
 mod ai;
 mod gui;
+mod item;
 
 fn main() {
     let mut game = core::Game::new();

@@ -4,6 +4,7 @@ extern crate rand;
 use super::gui::Gui;
 use super::object::Object;
 use super::map::Map;
+use super::item::Item;
 use super::player_action::PlayerAction;
 use super::player::Player;
 use super::components::{
@@ -32,6 +33,7 @@ pub struct Game {
     player: Player,
     objects: Vec<Object>,
     objects_next: Vec<Object>,
+    items: Vec<Item>,
     map: Map,
     fov_recompute: bool,
 }
@@ -62,6 +64,7 @@ impl Game {
             player,
             objects: vec![],
             objects_next: vec![],
+            items: vec![],
             map: map,
             fov_recompute: true,
         }
@@ -70,7 +73,7 @@ impl Game {
     /// Runs the main game loop
     pub fn run(&mut self) {
         let mut prev_player_position = (-1, -1);
-        let start = self.map.generate_map(&mut self.objects);
+        let start = self.map.generate_map(&mut self.objects, &mut self.items);
 
         // Copy the state of the objects to the next
         self.objects_next.clone_from(&self.objects);
@@ -125,6 +128,12 @@ impl Game {
             self.map.draw(&mut self.console);
         }
 
+        for item in &self.items {
+            if self.map.is_in_fov(item.position()) {
+                item.draw(&mut self.console);
+            }
+        }
+
         // Collect the objects which can be seen
         let mut to_draw: Vec<_> = self.objects.iter()
                                                    .filter(|o| self.map.is_in_fov(o.position()))
@@ -148,6 +157,10 @@ impl Game {
     fn clear_everything(&mut self) {
         for i in 0..self.objects.len() {
             self.objects[i].clear(&mut self.console);
+        }
+
+        for i in 0..self.items.len() {
+            self.items[i].clear(&mut self.console);
         }
 
         self.player.clear(&mut self.console);
@@ -182,6 +195,18 @@ impl Game {
                 self.player.move_or_attack(1, 0, &self.map, &mut self.objects, &mut self.messages);
                 PlayerAction::TookTurn
             },
+            (Key { printable: 'g', .. }, true) => {
+            // pick up an item
+            let item_id = self.items.iter().position(|object| {
+                object.position() == self.player.position()
+            });
+            if let Some(item_id) = item_id {
+                if self.player.pick_item_up(self.items[item_id].clone(), &mut self.messages) {
+                    self.items.remove(item_id);
+                }
+            }
+            PlayerAction::DidntTakeTurn
+        }
 
             _ => { PlayerAction::DidntTakeTurn },
         }

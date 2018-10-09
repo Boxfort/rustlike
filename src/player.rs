@@ -5,6 +5,7 @@ use player::tcod::colors::Color;
 use player::tcod::colors;
 use super::map::Map;
 use super::object::Object;
+use super::item::Item;
 use super::components::{
                     RenderComponent,
                     TransformComponent,
@@ -18,9 +19,8 @@ pub struct Player {
     renderer: RenderComponent,
     transform: TransformComponent,
     stats: StatsComponent,
-    x: i32,
-    y: i32,
     alive: bool,
+    inventory: Vec<Item>,
 }
 
 impl Player {
@@ -32,9 +32,8 @@ impl Player {
             renderer,
             transform,
             stats,
-            x,
-            y,
             alive: true,
+            inventory: vec![],
         }
     }
 
@@ -79,6 +78,20 @@ impl Player {
             // Apply damage.
             object.take_damage(damage);
             messages.push((format!("You attack the {} for {} damage", object.name, damage), colors::WHITE));
+        }
+    }
+
+    /// add to the player's inventory and remove from the map
+    pub fn pick_item_up(&mut self, item: Item, messages: &mut Vec<(String, Color)>) -> bool {
+        if self.inventory.len() >= 26 {
+            messages.push((format!("Your inventory is full, cannot pick up {}.", item.name), colors::RED));
+
+            false
+        } else {
+            messages.push((format!("You picked up a {}!", item.name), colors::GREEN));
+            self.inventory.push(item);
+
+            true
         }
     }
 

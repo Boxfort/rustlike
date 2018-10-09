@@ -5,6 +5,7 @@ use super::tile::Tile;
 use super::object::Object;
 use super::components::{StatsComponent};
 use super::ai::*;
+use super::item::Item;
 use map::tcod::console::*;
 use map::tcod::map::{Map as FovMap, FovAlgorithm};
 use map::tcod::{Color, colors};
@@ -105,7 +106,7 @@ impl Map {
     /// Generates a map of rectangular rooms between
     /// ROOM_MIN_SIZE and ROOM_MAX_SIZE size and up to
     /// MAX_ROOMS rooms.
-    pub fn generate_map(&mut self, objects: &mut Vec<Object>) -> (i32, i32) {
+    pub fn generate_map(&mut self, objects: &mut Vec<Object>, items: &mut Vec<Item>) -> (i32, i32) {
         self.tiles = vec![vec![Tile::wall(); self.height as usize]; self.width as usize];
 
         let mut rooms : Vec<Rect> = vec![];
@@ -142,7 +143,7 @@ impl Map {
                         self.create_h_tunnel(prev_x, new_x, new_y);
                     }
 
-                    self.place_objects(&room, objects);
+                    self.place_objects(&room, objects, items);
                 }
                 rooms.push(room);
             }
@@ -153,9 +154,10 @@ impl Map {
     }
 
     /// Randomly places objects into the specified room
-    fn place_objects(&mut self, room: &Rect, objects: &mut Vec<Object>) {
+    fn place_objects(&mut self, room: &Rect, objects: &mut Vec<Object>, items: &mut Vec<Item>) {
         let mut rng = rand::thread_rng();
         let rand_monsters = Uniform::new(0, MAX_ROOM_MONSTERS + 1);
+        let rand_items = Uniform::new(0, MAX_ROOM_MONSTERS + 1);
         let rand_x = Uniform::new(room.x1 + 1, room.x2);
         let rand_y = Uniform::new(room.y1 + 1, room.y2);
 
@@ -187,6 +189,17 @@ impl Map {
 
             monster.alive = true;
             objects.push(monster);
+        }
+
+        // choose random number of items
+        for _ in 0..rand_items.sample(&mut rng) {
+            // choose random spot for this item
+            let x = rand_x.sample(&mut rng);
+            let y = rand_y.sample(&mut rng);
+
+            // create a healing potion
+            let mut item = Item::new(x, y, '!',  None, Some(colors::VIOLET), "Healing Potion".to_string());
+            items.push(item);
         }
     }
 
