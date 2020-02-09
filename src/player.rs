@@ -1,4 +1,4 @@
-use super::{Map, Player, Position, State, TileType, Viewshed};
+use super::{Map, Player, Position, RunState, State, TileType, Viewshed};
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -20,9 +20,9 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     }
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
+pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
-        None => {} // Nothing to do.
+        None => return RunState::PAUSED, // Nothing to do.
         Some(key) => match key {
             VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
             VirtualKeyCode::Numpad4 => try_move_player(-1, 0, &mut gs.ecs),
@@ -36,7 +36,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
             VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
             VirtualKeyCode::Numpad2 => try_move_player(0, 1, &mut gs.ecs),
             VirtualKeyCode::J => try_move_player(0, 1, &mut gs.ecs),
-            _ => {} // Default case
+            _ => return RunState::PAUSED,
         },
     }
+    RunState::RUNNING
 }

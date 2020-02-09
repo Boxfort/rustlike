@@ -1,5 +1,5 @@
 extern crate rltk;
-use super::{Player, Rect, Viewshed};
+use super::Rect;
 use rltk::{Algorithm2D, BaseMap, Point};
 use rltk::{Console, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;

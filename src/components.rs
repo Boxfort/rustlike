@@ -11,8 +11,8 @@ pub struct Viewshed {
 #[derive(Component, Debug)]
 pub struct Player {}
 
-#[derive(Component)]
-pub struct LeftMover {}
+#[derive(Component, Debug)]
+pub struct Monster {}
 
 #[derive(Component)]
 pub struct Position {
