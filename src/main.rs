@@ -8,11 +8,13 @@ mod components;
 mod map;
 mod player;
 mod rect;
+mod visibility_system;
 
 pub use components::*;
 pub use map::*;
 use player::*;
 use rect::*;
+use visibility_system::*;
 
 pub struct State {
     ecs: World,
@@ -20,6 +22,8 @@ pub struct State {
 
 impl State {
     fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem {};
+        vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -31,8 +35,8 @@ impl GameState for State {
         self.run_systems();
         player_input(self, ctx);
 
-        let map = self.ecs.fetch::<Vec<TileType>>();
-        draw_map(&map, ctx);
+        let map = self.ecs.fetch::<Map>();
+        draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -53,15 +57,15 @@ fn main() {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
-    let (rooms, map) = new_map_rooms_and_corridors();
-    gs.ecs.insert(map);
+    let map = Map::new_map_rooms_and_corridors();
 
     gs.ecs
         .create_entity()
         .with(Position {
-            x: rooms[0].center().0,
-            y: rooms[0].center().1,
+            x: map.rooms[0].center().0,
+            y: map.rooms[0].center().1,
         })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
@@ -69,19 +73,14 @@ fn main() {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+            dirty: true,
+        })
         .build();
 
-    for i in 0..10 {
-        gs.ecs
-            .create_entity()
-            .with(Position { x: i * 7, y: 20 })
-            .with(Renderable {
-                glyph: rltk::to_cp437('@'),
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
-            })
-            .build();
-    }
+    gs.ecs.insert(map);
 
     rltk::main_loop(context, gs);
 }
