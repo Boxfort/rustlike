@@ -1,4 +1,4 @@
-use rltk::{Console, GameState, Rltk, RGB};
+use rltk::{console, Console, GameState, Point, Rltk, RGB};
 use specs::prelude::*;
 
 #[macro_use]
@@ -81,14 +81,16 @@ fn main() {
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<Name>();
 
     let map = Map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
 
     gs.ecs
         .create_entity()
         .with(Position {
-            x: map.rooms[0].center().0,
-            y: map.rooms[0].center().1,
+            x: player_x,
+            y: player_y,
         })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
@@ -96,6 +98,9 @@ fn main() {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Name {
+            name: "Player".to_string(),
+        })
         .with(Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
@@ -104,14 +109,23 @@ fn main() {
         .build();
 
     let mut rng = rltk::RandomNumberGenerator::new();
-    for room in map.rooms.iter().skip(1) {
+    for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
         let glyph: u8;
+        let name: String;
 
         match rng.roll_dice(1, 2) {
-            1 => glyph = rltk::to_cp437('g'),
-            _ => glyph = rltk::to_cp437('o'),
+            1 => {
+                glyph = rltk::to_cp437('g');
+                name = "Goblin".to_string();
+            }
+            _ => {
+                glyph = rltk::to_cp437('o');
+                name = "Orc".to_string();
+            }
         }
+
+        console::log(&format!("{} : {}", name, i));
 
         gs.ecs
             .create_entity()
@@ -127,10 +141,14 @@ fn main() {
                 dirty: true,
             })
             .with(Monster {})
+            .with(Name {
+                name: format!("{} #{}", &name, i),
+            })
             .build();
     }
 
     gs.ecs.insert(map);
+    gs.ecs.insert(Point::new(player_x, player_y));
 
     rltk::main_loop(context, gs);
 }
