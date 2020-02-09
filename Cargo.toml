@@ -2,7 +2,9 @@
 name = "roguelike"
 version = "0.1.0"
 authors = ["Boxfort <jackwanderson@protonmail.com>"]
+edition = "2018"
 
 [dependencies]
-tcod = "0.12.1"
-rand = "0.5.5"
+rltk = "0.6.2"
+specs = "0.15.0"
+specs-derive = "0.4.0"
