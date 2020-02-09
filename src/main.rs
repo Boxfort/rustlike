@@ -12,6 +12,7 @@ mod rect;
 pub use components::*;
 pub use map::*;
 use player::*;
+use rect::*;
 
 pub struct State {
     ecs: World,
@@ -53,11 +54,15 @@ fn main() {
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
 
-    gs.ecs.insert(new_map());
+    let (rooms, map) = new_map_rooms_and_corridors();
+    gs.ecs.insert(map);
 
     gs.ecs
         .create_entity()
-        .with(Position { x: 40, y: 25 })
+        .with(Position {
+            x: rooms[0].center().0,
+            y: rooms[0].center().1,
+        })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
