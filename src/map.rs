@@ -18,17 +18,10 @@ pub struct Map {
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
+    pub blocked: Vec<bool>,
 }
 
 impl Map {
-    pub fn idx_to_xy(&self, idx: usize) -> (i32, i32) {
-        (idx as i32 % self.width, idx as i32 / self.width)
-    }
-
-    pub fn xy_idx(&self, x: i32, y: i32) -> usize {
-        ((y * self.width) + x) as usize
-    }
-
     /// Determines if the tile at (x, y) is valid to be travelled to.
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
         // If the point is out of the bounds of the map.
@@ -37,7 +30,23 @@ impl Map {
         }
 
         let idx = self.xy_idx(x, y);
-        self.tiles[idx as usize] != TileType::WALL
+        !self.blocked[idx]
+    }
+
+    pub fn populate_blocked(&mut self) {
+        for (i, tile) in self.tiles.iter_mut().enumerate() {
+            self.blocked[i] = *tile == TileType::WALL
+        }
+    }
+
+    /// Convert a usize index into an (x, y) point on the map
+    pub fn idx_to_xy(&self, idx: usize) -> (i32, i32) {
+        (idx as i32 % self.width, idx as i32 / self.width)
+    }
+
+    /// Convert an (x, y) position into an index for the map
+    pub fn xy_idx(&self, x: i32, y: i32) -> usize {
+        ((y * self.width) + x) as usize
     }
 
     pub fn new_map_rooms_and_corridors() -> Self {
@@ -48,6 +57,7 @@ impl Map {
             height: 50,
             revealed_tiles: vec![false; 80 * 50],
             visible_tiles: vec![false; 80 * 50],
+            blocked: vec![false; 80 * 50],
         };
 
         const MAX_ROOMS: i32 = 30;

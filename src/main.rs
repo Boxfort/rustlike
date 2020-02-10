@@ -6,6 +6,7 @@ extern crate specs_derive;
 
 mod components;
 mod map;
+mod map_indexing_system;
 mod monster_ai_system;
 mod player;
 mod rect;
@@ -13,6 +14,7 @@ mod visibility_system;
 
 pub use components::*;
 pub use map::*;
+use map_indexing_system::*;
 use monster_ai_system::*;
 use player::*;
 use rect::*;
@@ -35,6 +37,8 @@ impl State {
         vis.run_now(&self.ecs);
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+        let mut map_idx = MapIndexingSystem {};
+        map_idx.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -82,6 +86,7 @@ fn main() {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<BlocksTile>();
 
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -125,8 +130,6 @@ fn main() {
             }
         }
 
-        console::log(&format!("{} : {}", name, i));
-
         gs.ecs
             .create_entity()
             .with(Position { x, y })
@@ -135,6 +138,7 @@ fn main() {
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
+            .with(BlocksTile {})
             .with(Viewshed {
                 visible_tiles: Vec::new(),
                 range: 8,

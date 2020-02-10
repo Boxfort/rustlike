@@ -19,6 +19,10 @@ pub struct Player {}
 #[derive(Component, Debug)]
 pub struct Monster {}
 
+/// This component indicates that the entity is solid, and cannot be walked through.
+#[derive(Component, Debug)]
+pub struct BlocksTile {}
+
 #[derive(Component)]
 pub struct Position {
     pub x: i32,

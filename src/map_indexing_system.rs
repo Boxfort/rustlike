@@ -1,0 +1,24 @@
+extern crate specs;
+use super::{BlocksTile, Map, Position};
+use specs::prelude::*;
+
+pub struct MapIndexingSystem {}
+
+impl<'a> System<'a> for MapIndexingSystem {
+    type SystemData = (
+        WriteExpect<'a, Map>,
+        ReadStorage<'a, Position>,
+        ReadStorage<'a, BlocksTile>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut map, position, blockers) = data;
+
+        map.populate_blocked();
+        // Get all entities with a position that are blocking and mark the map.
+        for (position, _blocks) in (&position, &blockers).join() {
+            let idx = map.xy_idx(position.x, position.y);
+            map.blocked[idx] = true;
+        }
+    }
+}

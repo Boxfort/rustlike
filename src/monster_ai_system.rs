@@ -19,29 +19,35 @@ impl<'a> System<'a> for MonsterAI {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, player_pos, mut viewshed, monster, name, mut position) = data;
+        let (map, player_pos, mut viewshed, monster, name, mut position) = data;
 
         for (mut viewshed, _monster, name, mut pos) in
             (&mut viewshed, &monster, &name, &mut position).join()
         {
             // If the monster can see the player
             if viewshed.visible_tiles.contains(&*player_pos) {
-                console::log(&format!("{} shouts insults", name.name));
-                let path = rltk::a_star_search(
-                    map.xy_idx(pos.x, pos.y) as i32,
-                    map.xy_idx(player_pos.x, player_pos.y) as i32,
-                    &mut *map,
-                );
+                let distance =
+                    rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
 
-                // If we found a way to the player and we're not right next
-                if path.success && path.steps.len() > 1 {
-                    // Move to the first position in the path
-                    let (x, y) = map.idx_to_xy(path.steps[1]);
-                    pos.x = x;
-                    pos.y = y;
+                if distance < 1.5 {
+                    console::log(&format!("{} shouts insults", name.name));
+                } else {
+                    let path = rltk::a_star_search(
+                        map.xy_idx(pos.x, pos.y) as i32,
+                        map.xy_idx(player_pos.x, player_pos.y) as i32,
+                        &*map,
+                    );
 
-                    // The monster has moved, recalculate it's sight.
-                    viewshed.dirty = true;
+                    // If we found a way to the player and we're not right next
+                    if path.success && path.steps.len() > 1 {
+                        // Move to the first position in the path
+                        let (x, y) = map.idx_to_xy(path.steps[1]);
+                        pos.x = x;
+                        pos.y = y;
+
+                        // The monster has moved, recalculate it's sight.
+                        viewshed.dirty = true;
+                    }
                 }
             }
         }
