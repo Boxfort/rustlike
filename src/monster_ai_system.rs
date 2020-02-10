@@ -1,5 +1,5 @@
 extern crate specs;
-use super::{Monster, Name, Point, Position, Viewshed};
+use super::{Map, Monster, Name, Point, Position, Viewshed};
 use specs::prelude::*;
 
 extern crate rltk;
@@ -8,19 +8,41 @@ use rltk::console;
 pub struct MonsterAI {}
 
 impl<'a> System<'a> for MonsterAI {
+    #[allow(clippy::type_complexity)]
     type SystemData = (
+        WriteExpect<'a, Map>,
         ReadExpect<'a, Point>,
-        ReadStorage<'a, Viewshed>,
+        WriteStorage<'a, Viewshed>,
         ReadStorage<'a, Monster>,
         ReadStorage<'a, Name>,
+        WriteStorage<'a, Position>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_pos, viewshed, monster, name) = data;
+        let (mut map, player_pos, mut viewshed, monster, name, mut position) = data;
 
-        for (viewshed, _monster, name) in (&viewshed, &monster, &name).join() {
+        for (mut viewshed, _monster, name, mut pos) in
+            (&mut viewshed, &monster, &name, &mut position).join()
+        {
+            // If the monster can see the player
             if viewshed.visible_tiles.contains(&*player_pos) {
                 console::log(&format!("{} shouts insults", name.name));
+                let path = rltk::a_star_search(
+                    map.xy_idx(pos.x, pos.y) as i32,
+                    map.xy_idx(player_pos.x, player_pos.y) as i32,
+                    &mut *map,
+                );
+
+                // If we found a way to the player and we're not right next
+                if path.success && path.steps.len() > 1 {
+                    // Move to the first position in the path
+                    let (x, y) = map.idx_to_xy(path.steps[1]);
+                    pos.x = x;
+                    pos.y = y;
+
+                    // The monster has moved, recalculate it's sight.
+                    viewshed.dirty = true;
+                }
             }
         }
     }

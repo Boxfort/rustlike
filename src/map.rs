@@ -21,8 +21,23 @@ pub struct Map {
 }
 
 impl Map {
+    pub fn idx_to_xy(&self, idx: usize) -> (i32, i32) {
+        (idx as i32 % self.width, idx as i32 / self.width)
+    }
+
     pub fn xy_idx(&self, x: i32, y: i32) -> usize {
         ((y * self.width) + x) as usize
+    }
+
+    /// Determines if the tile at (x, y) is valid to be travelled to.
+    fn is_exit_valid(&self, x: i32, y: i32) -> bool {
+        // If the point is out of the bounds of the map.
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
+
+        let idx = self.xy_idx(x, y);
+        self.tiles[idx as usize] != TileType::WALL
     }
 
     pub fn new_map_rooms_and_corridors() -> Self {
@@ -146,5 +161,49 @@ impl Algorithm2D for Map {
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
         self.tiles[idx] == TileType::WALL
+    }
+
+    fn get_available_exits(&self, idx: usize) -> Vec<(usize, f32)> {
+        let mut exits: Vec<(usize, f32)> = Vec::new();
+        let (x, y) = self.idx_to_xy(idx);
+        let w = self.width as usize;
+
+        // Cardinal Directions
+        // Left
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        };
+        // Right
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        };
+        // Up
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - w, 1.0))
+        };
+        // Down
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + w, 1.0))
+        };
+
+        // Diagonals
+        // Up Left
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push((idx - w, 1.45))
+        };
+        // Up Right
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push((idx - w, 1.45))
+        };
+        // Down Left
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push((idx + w, 1.45))
+        };
+        // Down Right
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push((idx + w, 1.45))
+        };
+
+        exits
     }
 }
