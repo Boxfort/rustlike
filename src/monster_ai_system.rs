@@ -19,7 +19,7 @@ impl<'a> System<'a> for MonsterAI {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (map, player_pos, mut viewshed, monster, name, mut position) = data;
+        let (mut map, player_pos, mut viewshed, monster, name, mut position) = data;
 
         for (mut viewshed, _monster, name, mut pos) in
             (&mut viewshed, &monster, &name, &mut position).join()
