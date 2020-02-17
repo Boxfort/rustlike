@@ -1,6 +1,24 @@
 use rltk::RGB;
 use specs::prelude::*;
 
+#[derive(Component, Debug, Clone)]
+pub struct WantsToMelee {
+    pub target: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct SufferDamage {
+    pub amount: i32,
+}
+
+#[derive(Component)]
+pub struct CombatStats {
+    pub max_hp: i32,
+    pub hp: i32,
+    pub defence: i32,
+    pub power: i32,
+}
+
 #[derive(Component)]
 pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,

@@ -25,13 +25,21 @@ pub struct Map {
 impl Map {
     /// Determines if the tile at (x, y) is valid to be travelled to.
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
-        // If the point is out of the bounds of the map.
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+        if !self.is_in_bounds(x, y) {
             return false;
         }
 
         let idx = self.xy_idx(x, y);
         !self.blocked[idx]
+    }
+
+    /// Returns true if the (x,y) coordinate is within the bounds of the map
+    pub fn is_in_bounds(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
+
+        true
     }
 
     pub fn populate_blocked(&mut self) {

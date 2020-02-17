@@ -5,16 +5,20 @@ use specs::prelude::*;
 extern crate specs_derive;
 
 mod components;
+mod damage_system;
 mod map;
 mod map_indexing_system;
+mod melee_combat_system;
 mod monster_ai_system;
 mod player;
 mod rect;
 mod visibility_system;
 
 pub use components::*;
+use damage_system::*;
 pub use map::*;
 use map_indexing_system::*;
+use melee_combat_system::*;
 use monster_ai_system::*;
 use player::*;
 use rect::*;
@@ -39,6 +43,11 @@ impl State {
         mob.run_now(&self.ecs);
         let mut map_idx = MapIndexingSystem {};
         map_idx.run_now(&self.ecs);
+        let mut damage = DamageSystem {};
+        damage.run_now(&self.ecs);
+        let mut melee = MeleeCombatSystem {};
+        melee.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -53,6 +62,8 @@ impl GameState for State {
         } else {
             self.runstate = player_input(self, ctx);
         }
+
+        DamageSystem::delete_the_dead(&mut self.ecs);
 
         draw_map(&self.ecs, ctx);
 
@@ -87,6 +98,9 @@ fn main() {
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<SufferDamage>();
 
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -110,6 +124,12 @@ fn main() {
             visible_tiles: Vec::new(),
             range: 8,
             dirty: true,
+        })
+        .with(CombatStats {
+            max_hp: 16,
+            hp: 16,
+            defence: 1,
+            power: 4,
         })
         .build();
 
@@ -147,6 +167,12 @@ fn main() {
             .with(Monster {})
             .with(Name {
                 name: format!("{} #{}", &name, i),
+            })
+            .with(CombatStats {
+                max_hp: 16,
+                hp: 16,
+                defence: 1,
+                power: 4,
             })
             .build();
     }

@@ -42,6 +42,8 @@ impl<'a> System<'a> for MonsterAI {
                     if path.success && path.steps.len() > 1 {
                         // Move to the first position in the path
                         let (x, y) = map.idx_to_xy(path.steps[1]);
+
+                        // Set the monsters new position
                         pos.x = x;
                         pos.y = y;
 

@@ -26,6 +26,7 @@ impl<'a> System<'a> for MapIndexingSystem {
                 map.blocked[idx] = true;
             }
 
+            // Push the entity into the appropriate index. It's a copy type so we don't need to clone it.
             map.tile_content[idx].push(entity);
         }
     }
