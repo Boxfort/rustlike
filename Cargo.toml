@@ -6,5 +6,5 @@ edition = "2018"
 
 [dependencies]
 rltk = "0.6.2"
-specs = "0.15.0"
+specs = { version = "0.15.0", features = ["nightly"] }
 specs-derive = "0.4.0"

@@ -17,11 +17,13 @@ impl<'a> System<'a> for MeleeCombatSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (entities, mut wants_melee, names, combat_stats, mut suffer_damage) = data;
 
-        for (entity, mut wants_melee, name, stats) in
+        for (_entity, wants_melee, name, stats) in
             (&entities, &mut wants_melee, &names, &combat_stats).join()
         {
+            // Dead people can't attack
             if stats.hp > 0 {
                 let target_stats = combat_stats.get(wants_melee.target).unwrap();
+                // Don't attack dead people
                 if target_stats.hp > 0 {
                     let target_name = names.get(wants_melee.target).unwrap();
                     let damage = i32::max(0, stats.power - target_stats.defence);

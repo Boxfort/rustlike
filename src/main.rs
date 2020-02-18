@@ -26,13 +26,14 @@ use visibility_system::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
-    PAUSED,
-    RUNNING,
+    AwaitingInput,
+    PreRun,
+    PlayerTurn,
+    MonsterTurn,
 }
 
 pub struct State {
     pub ecs: World,
-    pub runstate: RunState,
 }
 
 impl State {
@@ -56,11 +57,34 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        if self.runstate == RunState::RUNNING {
-            self.run_systems();
-            self.runstate = RunState::PAUSED;
-        } else {
-            self.runstate = player_input(self, ctx);
+        let mut current_runstate: RunState;
+        {
+            let runstate = self.ecs.fetch::<RunState>();
+            current_runstate = *runstate;
+        }
+
+        match current_runstate {
+            RunState::PreRun => {
+                self.run_systems();
+                current_runstate = RunState::AwaitingInput;
+            }
+            RunState::AwaitingInput => {
+                self.run_systems();
+                current_runstate = player_input(self, ctx);
+            }
+            RunState::PlayerTurn => {
+                self.run_systems();
+                current_runstate = RunState::MonsterTurn;
+            }
+            RunState::MonsterTurn => {
+                self.run_systems();
+                current_runstate = RunState::AwaitingInput;
+            }
+        }
+
+        {
+            let mut runstate = self.ecs.write_resource::<RunState>();
+            *runstate = current_runstate
         }
 
         DamageSystem::delete_the_dead(&mut self.ecs);
@@ -85,10 +109,8 @@ fn main() {
     let context = RltkBuilder::simple80x50()
         .with_title("Hello World.")
         .build();
-    let mut gs = State {
-        ecs: World::new(),
-        runstate: RunState::RUNNING,
-    };
+
+    let mut gs = State { ecs: World::new() };
 
     // Register Components
     gs.ecs.register::<Position>();
@@ -105,7 +127,8 @@ fn main() {
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -126,7 +149,7 @@ fn main() {
             dirty: true,
         })
         .with(CombatStats {
-            max_hp: 16,
+            max_hp: 33,
             hp: 16,
             defence: 1,
             power: 4,
@@ -170,7 +193,7 @@ fn main() {
             })
             .with(CombatStats {
                 max_hp: 16,
-                hp: 16,
+                hp: 3,
                 defence: 1,
                 power: 4,
             })
@@ -179,6 +202,8 @@ fn main() {
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
+    gs.ecs.insert(player_entity);
+    gs.ecs.insert(RunState::PreRun);
 
     rltk::main_loop(context, gs);
 }
