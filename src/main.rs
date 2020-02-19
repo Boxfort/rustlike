@@ -6,6 +6,7 @@ extern crate specs_derive;
 
 mod components;
 mod damage_system;
+mod gui;
 mod map;
 mod map_indexing_system;
 mod melee_combat_system;
@@ -16,6 +17,7 @@ mod visibility_system;
 
 pub use components::*;
 use damage_system::*;
+use gui::*;
 pub use map::*;
 use map_indexing_system::*;
 use melee_combat_system::*;
@@ -101,6 +103,8 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
+
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 

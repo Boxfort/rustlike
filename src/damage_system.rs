@@ -1,5 +1,5 @@
 extern crate specs;
-use super::{CombatStats, Player, SufferDamage};
+use super::{CombatStats, Name, Player, SufferDamage};
 use rltk::console;
 use specs::prelude::*;
 
@@ -28,13 +28,20 @@ impl DamageSystem {
         {
             let players = ecs.read_storage::<Player>();
             let combat_stats = ecs.read_storage::<CombatStats>();
+            let names = ecs.read_storage::<Name>();
             let entities = ecs.entities();
 
             for (entity, stats) in (&entities, &combat_stats).join() {
                 if stats.hp < 1 {
                     let player = players.get(entity);
                     match player {
-                        None => dead.push(entity),
+                        None => {
+                            let victim_name = names.get(entity);
+                            if let Some(victim_name) = victim_name {
+                                console::log(&format!("{} is dead", &victim_name.name));
+                            }
+                            dead.push(entity)
+                        }
                         Some(_) => console::log("You are dead"),
                     }
                 }
