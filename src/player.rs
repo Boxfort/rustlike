@@ -1,7 +1,8 @@
 use super::{
-    CombatStats, Map, Player, Point, Position, RunState, State, TileType, Viewshed, WantsToMelee,
+    CombatStats, Cursor, GameState, Map, Player, Point, Position, RunState, State, TileType,
+    Viewshed, WantsToMelee,
 };
-use rltk::{Rltk, VirtualKeyCode};
+use rltk::{console, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -50,31 +51,85 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     }
 }
 
+pub fn try_move_cursor(delta_x: i32, delta_y: i32, ecs: &mut World) {
+    let mut cursor = ecs.fetch_mut::<Cursor>();
+    let map = ecs.fetch::<Map>();
+
+    if !map.is_in_bounds(cursor.x + delta_x, cursor.y + delta_y) {
+        return;
+    }
+
+    cursor.x += delta_x;
+    cursor.y += delta_y;
+}
+
+/// Handle players input, carries out appropriate actions, and returns
+/// the resulting state.
+///
+/// This is essentially a state machine, and so in future may need to be
+/// re-implemented as such.
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
+    let state = *gs.ecs.fetch::<RunState>();
+
     match ctx.key {
-        None => return RunState::AwaitingInput, // Nothing to do.
+        None => return state, // Nothing to do.
         Some(key) => match key {
             // Cardinal Directions
             VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
-                try_move_player(-1, 0, &mut gs.ecs)
+                handle_movement(-1, 0, &mut gs.ecs)
             }
             VirtualKeyCode::Right | VirtualKeyCode::Numpad6 | VirtualKeyCode::L => {
-                try_move_player(1, 0, &mut gs.ecs)
+                handle_movement(1, 0, &mut gs.ecs)
             }
             VirtualKeyCode::Up | VirtualKeyCode::Numpad8 | VirtualKeyCode::K => {
-                try_move_player(0, -1, &mut gs.ecs)
+                handle_movement(0, -1, &mut gs.ecs)
             }
             VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => {
-                try_move_player(0, 1, &mut gs.ecs)
+                handle_movement(0, 1, &mut gs.ecs)
             }
             // Diagonals
-            VirtualKeyCode::Numpad9 | VirtualKeyCode::Y => try_move_player(1, -1, &mut gs.ecs),
-            VirtualKeyCode::Numpad7 | VirtualKeyCode::U => try_move_player(-1, -1, &mut gs.ecs),
-            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
-            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
+            VirtualKeyCode::Numpad9 | VirtualKeyCode::Y => handle_movement(1, -1, &mut gs.ecs),
+            VirtualKeyCode::Numpad7 | VirtualKeyCode::U => handle_movement(-1, -1, &mut gs.ecs),
+            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => handle_movement(1, 1, &mut gs.ecs),
+            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => handle_movement(-1, 1, &mut gs.ecs),
+            // Handle Examining
+            VirtualKeyCode::X => return handle_examine(&mut gs.ecs),
             // No key is being pressed so we're still waiting for input
-            _ => return RunState::AwaitingInput,
+            _ => return state,
         },
     }
-    RunState::MonsterTurn
+
+    if state == RunState::Examining {
+        state
+    } else {
+        RunState::MonsterTurn
+    }
+}
+
+/// Handles switching between examining state
+pub fn handle_examine(ecs: &mut World) -> RunState {
+    let state = *ecs.fetch::<RunState>();
+
+    if state == RunState::AwaitingInput {
+        // Fetch the needed information
+        let mut cursor = ecs.fetch_mut::<Cursor>();
+        let player_pos = ecs.fetch::<Point>();
+
+        // Put the cursor on top of the player
+        cursor.x = player_pos.x;
+        cursor.y = player_pos.y;
+
+        RunState::Examining
+    } else {
+        RunState::AwaitingInput
+    }
+}
+
+pub fn handle_movement(x: i32, y: i32, ecs: &mut World) {
+    let state = *ecs.fetch::<RunState>();
+
+    match state {
+        RunState::Examining => try_move_cursor(x, y, ecs),
+        _ => try_move_player(x, y, ecs),
+    }
 }

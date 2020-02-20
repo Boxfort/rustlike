@@ -1,5 +1,5 @@
 extern crate specs;
-use super::{CombatStats, Name, Player, SufferDamage};
+use super::{CombatStats, GameLog, Name, Player, SufferDamage};
 use rltk::console;
 use specs::prelude::*;
 
@@ -26,6 +26,7 @@ impl DamageSystem {
     pub fn delete_the_dead(ecs: &mut World) {
         let mut dead: Vec<Entity> = Vec::new();
         {
+            let mut log = ecs.fetch_mut::<GameLog>();
             let players = ecs.read_storage::<Player>();
             let combat_stats = ecs.read_storage::<CombatStats>();
             let names = ecs.read_storage::<Name>();
@@ -38,7 +39,7 @@ impl DamageSystem {
                         None => {
                             let victim_name = names.get(entity);
                             if let Some(victim_name) = victim_name {
-                                console::log(&format!("{} is dead", &victim_name.name));
+                                log.entries.push(format!("{} is dead", &victim_name.name));
                             }
                             dead.push(entity)
                         }

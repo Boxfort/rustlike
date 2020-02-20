@@ -1,5 +1,12 @@
-use rltk::RGB;
+use rltk::{Point, RGB};
 use specs::prelude::*;
+
+/// Examining Cursor, used to point to things on the screen.
+#[derive(Debug)]
+pub struct Cursor {
+    pub x: i32,
+    pub y: i32,
+}
 
 #[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {

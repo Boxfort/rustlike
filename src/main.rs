@@ -6,6 +6,7 @@ extern crate specs_derive;
 
 mod components;
 mod damage_system;
+mod gamelog;
 mod gui;
 mod map;
 mod map_indexing_system;
@@ -17,6 +18,7 @@ mod visibility_system;
 
 pub use components::*;
 use damage_system::*;
+use gamelog::*;
 use gui::*;
 pub use map::*;
 use map_indexing_system::*;
@@ -26,12 +28,13 @@ use player::*;
 use rect::*;
 use visibility_system::*;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum RunState {
     AwaitingInput,
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    Examining,
 }
 
 pub struct State {
@@ -70,7 +73,7 @@ impl GameState for State {
                 self.run_systems();
                 current_runstate = RunState::AwaitingInput;
             }
-            RunState::AwaitingInput => {
+            RunState::AwaitingInput | RunState::Examining => {
                 self.run_systems();
                 current_runstate = player_input(self, ctx);
             }
@@ -110,9 +113,7 @@ impl GameState for State {
 
 fn main() {
     use rltk::RltkBuilder;
-    let context = RltkBuilder::simple80x50()
-        .with_title("Hello World.")
-        .build();
+    let mut context = RltkBuilder::simple80x50().with_title("Rustlike").build();
 
     let mut gs = State { ecs: World::new() };
 
@@ -154,7 +155,7 @@ fn main() {
         })
         .with(CombatStats {
             max_hp: 33,
-            hp: 16,
+            hp: 33,
             defence: 1,
             power: 4,
         })
@@ -196,8 +197,8 @@ fn main() {
                 name: format!("{} #{}", &name, i),
             })
             .with(CombatStats {
-                max_hp: 16,
-                hp: 3,
+                max_hp: 9,
+                hp: 9,
                 defence: 1,
                 power: 4,
             })
@@ -206,8 +207,12 @@ fn main() {
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
+    gs.ecs.insert(Cursor { x: 0, y: 0 });
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welcome to Rustlike".to_string()],
+    });
 
     rltk::main_loop(context, gs);
 }
