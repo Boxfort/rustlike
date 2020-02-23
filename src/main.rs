@@ -27,6 +27,7 @@ use melee_combat_system::*;
 use monster_ai_system::*;
 use player::*;
 use rect::*;
+use rltk::RltkBuilder;
 use visibility_system::*;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -113,22 +114,11 @@ impl GameState for State {
 }
 
 fn main() {
-    use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50().with_title("Rustlike").build();
 
     let mut gs = State { ecs: World::new() };
 
-    // Register Components
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<Monster>();
-    gs.ecs.register::<Player>();
-    gs.ecs.register::<Viewshed>();
-    gs.ecs.register::<Name>();
-    gs.ecs.register::<BlocksTile>();
-    gs.ecs.register::<CombatStats>();
-    gs.ecs.register::<WantsToMelee>();
-    gs.ecs.register::<SufferDamage>();
+    register_components(&mut gs.ecs);
 
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
 
@@ -151,4 +141,20 @@ fn main() {
     });
 
     rltk::main_loop(context, gs);
+}
+
+/// Register all the components that we need with the ECS
+fn register_components(ecs: &mut World) {
+    ecs.register::<Position>();
+    ecs.register::<Renderable>();
+    ecs.register::<Monster>();
+    ecs.register::<Player>();
+    ecs.register::<Viewshed>();
+    ecs.register::<Name>();
+    ecs.register::<BlocksTile>();
+    ecs.register::<CombatStats>();
+    ecs.register::<WantsToMelee>();
+    ecs.register::<SufferDamage>();
+    ecs.register::<Item>();
+    ecs.register::<Potion>();
 }

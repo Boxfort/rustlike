@@ -1,6 +1,14 @@
 use rltk::RGB;
 use specs::prelude::*;
 
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
+pub struct Potion {
+    pub heal_amount: i32,
+}
+
 /// Examining Cursor, used to point to things on the screen.
 #[derive(Debug)]
 pub struct Cursor {

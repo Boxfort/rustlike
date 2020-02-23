@@ -78,27 +78,32 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
         if !tooltip.is_empty() {
             // Draw tooltip
-            let mut width: i32 = 0;
+            let mut width_offset: i32 = 0;
             for s in tooltip.iter() {
                 // Set tooltip width to longest name
-                if width < s.len() as i32 {
-                    width = s.len() as i32;
+                if width_offset < s.len() as i32 {
+                    width_offset = s.len() as i32;
                 }
             }
 
+            // Set intial tooltip
+            let mut arrow = "->".to_string();
+            let mut arrow_offset = arrow.len() as i32;
+            width_offset += arrow_offset;
+
+            // If we're over halfway then flip the toolip
             if cursor.x > 40 {
-                // Set stuff
-            } else {
-                // Set other stuff
+                arrow = "<-".to_string();
+                width_offset = -(arrow.len() as i32);
+                arrow_offset = 0;
             }
 
-            let arrow_pos = Point::new(cursor.x - 2, cursor.y);
-            let left_x = cursor.x - width - 2;
-            let y = cursor.y;
-            for s in tooltip.iter() {
-                // Draw tooltip
+            let arrow_pos = Point::new(cursor.x, cursor.y);
+            let mut y = cursor.y;
+            for (idx, s) in tooltip.iter().enumerate() {
+                // Draw tooltip text
                 ctx.print_color(
-                    left_x,
+                    cursor.x - width_offset,
                     y,
                     RGB::named(rltk::WHITE),
                     RGB::named(rltk::DARK_GRAY),
@@ -106,13 +111,13 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 )
             }
 
-            // Print arrow
+            // Draw tooltip arrow
             ctx.print_color(
-                arrow_pos.x,
+                arrow_pos.x - arrow_offset,
                 arrow_pos.y,
                 RGB::named(rltk::WHITE),
                 RGB::named(rltk::DARK_GRAY),
-                &"->".to_string(),
+                &arrow,
             );
         }
     }

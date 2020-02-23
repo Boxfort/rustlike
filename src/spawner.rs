@@ -1,8 +1,8 @@
 extern crate rltk;
 extern crate specs;
 use super::{
-    BlocksTile, CombatStats, Map, Monster, Name, Player, Position, Rect, Renderable, Viewshed,
-    MAPWIDTH,
+    BlocksTile, CombatStats, Item, Monster, Name, Player, Position, Potion, Rect, Renderable,
+    Viewshed, MAPWIDTH,
 };
 use rltk::{console, RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -40,26 +40,36 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
 }
 
 pub fn populate_room(ecs: &mut World, room: &Rect) {
-    console::log(&format!(
-        "Spawning for room: ({},{})({},{})",
-        room.x1, room.y1, room.x2, room.y2
-    ));
     let mut monster_spawn_points: Vec<usize> = Vec::new();
+    let mut item_spawn_points: Vec<usize> = Vec::new();
 
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
         let num_monsters = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
+        let num_items = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
 
         for _i in 0..num_monsters {
-            let mut added = false;
             // Loop until a valid point to spawn is found
             loop {
                 let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
                 let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
                 let idx = (y * MAPWIDTH) + x;
                 if !monster_spawn_points.contains(&idx) {
-                    console::log(&format!("Spawning monster at: ({},{})", x, y));
                     monster_spawn_points.push(idx);
+                    // Valid spawn found, break out of loop
+                    break;
+                }
+            }
+        }
+
+        for _i in 0..num_items {
+            // Loop until a valid point to spawn is found
+            loop {
+                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
+                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
+                let idx = (y * MAPWIDTH) + x;
+                if !item_spawn_points.contains(&idx) {
+                    item_spawn_points.push(idx);
                     // Valid spawn found, break out of loop
                     break;
                 }
@@ -72,6 +82,27 @@ pub fn populate_room(ecs: &mut World, room: &Rect) {
         let y = (*idx / MAPWIDTH) as i32;
         random_monster(ecs, x, y);
     }
+    for idx in monster_spawn_points.iter() {
+        let x = (*idx % MAPWIDTH) as i32;
+        let y = (*idx / MAPWIDTH) as i32;
+        health_potion(ecs, x, y);
+    }
+}
+
+fn health_potion(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('i'),
+            fg: RGB::named(rltk::MAGENTA),
+            bg: RGB::named(rltk::BLACK),
+        })
+        .with(Name {
+            name: "Health Potion".to_string(),
+        })
+        .with(Item {})
+        .with(Potion { heal_amount: 8 })
+        .build();
 }
 
 pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
