@@ -5,9 +5,9 @@ use rltk::{Console, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-const MAPWIDTH: usize = 80;
-const MAPHEIGHT: usize = 43;
-const MAPCOUNT: usize = MAPWIDTH * MAPHEIGHT;
+pub const MAPWIDTH: usize = 80;
+pub const MAPHEIGHT: usize = 43;
+pub const MAPCOUNT: usize = MAPWIDTH * MAPHEIGHT;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -86,7 +86,7 @@ impl Map {
 
         let mut rng = RandomNumberGenerator::new();
 
-        for _ in 0..MAX_ROOMS {
+        'outer: for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, map.width - w - 1) - 1;
@@ -95,26 +95,25 @@ impl Map {
             let mut ok = true;
             for other_room in map.rooms.iter() {
                 if new_room.intersect(other_room) {
-                    ok = false
+                    // Skip to the next room
+                    continue 'outer;
                 }
             }
-            if ok {
-                map.apply_room_to_map(&new_room);
+            map.apply_room_to_map(&new_room);
 
-                if !map.rooms.is_empty() {
-                    let (new_x, new_y) = new_room.center();
-                    let (prev_x, prev_y) = map.rooms[map.rooms.len() - 1].center();
-                    if rng.range(0, 2) == 1 {
-                        map.apply_horizontal_tunnel(prev_x, new_x, prev_y);
-                        map.apply_vertical_tunnel(prev_y, new_y, new_x);
-                    } else {
-                        map.apply_horizontal_tunnel(prev_x, new_x, new_y);
-                        map.apply_vertical_tunnel(prev_y, new_y, prev_x);
-                    }
+            if !map.rooms.is_empty() {
+                let (new_x, new_y) = new_room.center();
+                let (prev_x, prev_y) = map.rooms[map.rooms.len() - 1].center();
+                if rng.range(0, 2) == 1 {
+                    map.apply_horizontal_tunnel(prev_x, new_x, prev_y);
+                    map.apply_vertical_tunnel(prev_y, new_y, new_x);
+                } else {
+                    map.apply_horizontal_tunnel(prev_x, new_x, new_y);
+                    map.apply_vertical_tunnel(prev_y, new_y, prev_x);
                 }
-
-                map.rooms.push(new_room);
             }
+
+            map.rooms.push(new_room);
         }
 
         map
@@ -163,7 +162,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                     fg = RGB::from_f32(0.0, 0.5, 0.5);
                 }
                 TileType::WALL => {
-                    glyph = rltk::to_cp437('.');
+                    glyph = rltk::to_cp437('#');
                     fg = RGB::from_f32(0.0, 1.0, 0.0);
                 }
             }

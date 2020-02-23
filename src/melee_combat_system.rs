@@ -1,6 +1,5 @@
 extern crate specs;
 use super::{CombatStats, GameLog, Name, SufferDamage, WantsToMelee};
-use rltk::console;
 use specs::prelude::*;
 
 pub struct MeleeCombatSystem {}

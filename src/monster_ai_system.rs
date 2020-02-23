@@ -1,10 +1,8 @@
 extern crate specs;
-use super::{Map, Monster, Name, Point, Position, RunState, Viewshed, WantsToMelee};
+use super::{Map, Monster, Point, Position, RunState, Viewshed, WantsToMelee};
 use specs::prelude::*;
 
 extern crate rltk;
-use rltk::console;
-
 pub struct MonsterAI {}
 
 impl<'a> System<'a> for MonsterAI {

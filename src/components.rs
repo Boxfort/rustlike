@@ -1,4 +1,4 @@
-use rltk::{Point, RGB};
+use rltk::RGB;
 use specs::prelude::*;
 
 /// Examining Cursor, used to point to things on the screen.

@@ -93,15 +93,15 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             }
 
             let arrow_pos = Point::new(cursor.x - 2, cursor.y);
-            let left_x = cursor.x - width;
-            let mut y = cursor.y;
+            let left_x = cursor.x - width - 2;
+            let y = cursor.y;
             for s in tooltip.iter() {
                 // Draw tooltip
                 ctx.print_color(
                     left_x,
                     y,
                     RGB::named(rltk::WHITE),
-                    RGB::named(rltk::GREY),
+                    RGB::named(rltk::DARK_GRAY),
                     s,
                 )
             }
@@ -111,7 +111,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 arrow_pos.x,
                 arrow_pos.y,
                 RGB::named(rltk::WHITE),
-                RGB::named(rltk::GREY),
+                RGB::named(rltk::DARK_GRAY),
                 &"->".to_string(),
             );
         }
