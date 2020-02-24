@@ -5,6 +5,7 @@ use specs::prelude::*;
 pub struct MeleeCombatSystem {}
 
 impl<'a> System<'a> for MeleeCombatSystem {
+    #[allow(clippy::type_complexity)]
     type SystemData = (
         Entities<'a>,
         WriteExpect<'a, GameLog>,

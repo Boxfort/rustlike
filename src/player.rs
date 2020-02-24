@@ -1,5 +1,6 @@
 use super::{
-    CombatStats, Cursor, Map, Player, Point, Position, RunState, State, Viewshed, WantsToMelee,
+    CombatStats, Cursor, GameLog, Item, Map, Player, Point, Position, RunState, State, Viewshed,
+    WantsToMelee, WantsToPickupItem,
 };
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
@@ -93,6 +94,10 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad1 | VirtualKeyCode::B => handle_movement(-1, 1, &mut gs.ecs),
             // Handle Examining
             VirtualKeyCode::X => return handle_examine(&mut gs.ecs),
+            // Handle Pickup
+            VirtualKeyCode::G => return get_item(&mut gs.ecs),
+            // Handle Inventory
+            VirtualKeyCode::I => return RunState::ShowInventory,
             // No key is being pressed so we're still waiting for input
             _ => return state,
         },
@@ -106,7 +111,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 }
 
 /// Handles switching between examining state
-pub fn handle_examine(ecs: &mut World) -> RunState {
+fn handle_examine(ecs: &mut World) -> RunState {
     let state = *ecs.fetch::<RunState>();
 
     if state == RunState::AwaitingInput {
@@ -124,11 +129,50 @@ pub fn handle_examine(ecs: &mut World) -> RunState {
     }
 }
 
-pub fn handle_movement(x: i32, y: i32, ecs: &mut World) {
+fn handle_movement(x: i32, y: i32, ecs: &mut World) {
     let state = *ecs.fetch::<RunState>();
 
     match state {
         RunState::Examining => try_move_cursor(x, y, ecs),
         _ => try_move_player(x, y, ecs),
+    }
+}
+
+fn get_item(ecs: &mut World) -> RunState {
+    let player_pos = ecs.fetch::<Point>();
+    let player_entity = ecs.fetch::<Entity>();
+    let entities = ecs.entities();
+    let items = ecs.read_storage::<Item>();
+    let positions = ecs.read_storage::<Position>();
+    let mut gamelog = ecs.fetch_mut::<GameLog>();
+
+    let mut target_item: Option<Entity> = None;
+    for (item_entity, _item, position) in (&entities, &items, &positions).join() {
+        if position.x == player_pos.x && position.y == player_pos.y {
+            target_item = Some(item_entity);
+            break;
+        }
+    }
+
+    match target_item {
+        None => {
+            gamelog
+                .entries
+                .push("There is nothing here to pick up.".to_string());
+            RunState::AwaitingInput
+        }
+        Some(item) => {
+            let mut pickup = ecs.write_storage::<WantsToPickupItem>();
+            pickup
+                .insert(
+                    *player_entity,
+                    WantsToPickupItem {
+                        collected_by: *player_entity,
+                        item,
+                    },
+                )
+                .expect("Unable to insert want to pickup");
+            RunState::MonsterTurn
+        }
     }
 }

@@ -1,8 +1,15 @@
 extern crate rltk;
 extern crate specs;
-use super::{CombatStats, Cursor, GameLog, Name, Player, Position, RunState};
-use rltk::{Console, Point, Rltk, RGB};
+use super::{CombatStats, Cursor, GameLog, InBackpack, Name, Player, Position, RunState, State};
+use rltk::{Console, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
+
+#[derive(PartialEq)]
+pub enum ItemMenuResult {
+    Cancel,
+    NoResponse,
+    Selected(Entity),
+}
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     ctx.draw_box(
@@ -86,7 +93,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 }
             }
 
-            // Set intial tooltip
+            // Set intial tooltip vars
             let mut arrow = "->".to_string();
             let mut arrow_offset = arrow.len() as i32;
             width_offset += arrow_offset;
@@ -98,13 +105,11 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
                 arrow_offset = 0;
             }
 
-            let arrow_pos = Point::new(cursor.x, cursor.y);
-            let mut y = cursor.y;
-            for (idx, s) in tooltip.iter().enumerate() {
+            for s in tooltip.iter() {
                 // Draw tooltip text
                 ctx.print_color(
                     cursor.x - width_offset,
-                    y,
+                    cursor.y,
                     RGB::named(rltk::WHITE),
                     RGB::named(rltk::DARK_GRAY),
                     s,
@@ -113,12 +118,102 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
             // Draw tooltip arrow
             ctx.print_color(
-                arrow_pos.x - arrow_offset,
-                arrow_pos.y,
+                cursor.x - arrow_offset,
+                cursor.y,
                 RGB::named(rltk::WHITE),
                 RGB::named(rltk::DARK_GRAY),
                 &arrow,
             );
         }
+    }
+}
+
+pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let names = gs.ecs.read_storage::<Name>();
+    let backpack = gs.ecs.read_storage::<InBackpack>();
+    let entities = gs.ecs.entities();
+
+    // Get all of the items in the players backpack
+    let inventory: Vec<(Entity, &InBackpack, &Name)> = (&entities, &backpack, &names)
+        .join()
+        .filter(|item| item.1.owner == *player_entity)
+        .collect();
+
+    let count = inventory.len() as i32;
+
+    let inventory_y = 25;
+    let inventory_x = 15;
+    let inventory_width = 32;
+
+    let mut y = inventory_y - (count / 2);
+
+    // Draw the Inventory box
+    ctx.draw_box(
+        inventory_x,
+        y - 2,
+        inventory_width,
+        (count + 3) as i32,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+    );
+    ctx.print_color(
+        inventory_x + 3,
+        y - 2,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "Inventory",
+    );
+    ctx.print_color(
+        inventory_x + 3,
+        y + count + 1,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "ESCAPE to cancel",
+    );
+
+    let mut equippable: Vec<Entity> = Vec::new();
+    for (i, (entity, _pack, name)) in inventory.iter().enumerate() {
+        // Draw the inventory contents
+        ctx.set(
+            inventory_x + 2,
+            y,
+            RGB::named(rltk::WHITE),
+            RGB::named(rltk::BLACK),
+            rltk::to_cp437('('),
+        );
+        ctx.set(
+            inventory_x + 3,
+            y,
+            RGB::named(rltk::YELLOW),
+            RGB::named(rltk::BLACK),
+            97 + i as u8,
+        );
+        ctx.set(
+            inventory_x + 4,
+            y,
+            RGB::named(rltk::WHITE),
+            RGB::named(rltk::BLACK),
+            rltk::to_cp437(')'),
+        );
+
+        ctx.print(inventory_x + 6, y, &name.name.to_string());
+        equippable.push(*entity);
+
+        y += 1;
+    }
+
+    match ctx.key {
+        None => ItemMenuResult::NoResponse,
+        Some(key) => match key {
+            VirtualKeyCode::Escape => ItemMenuResult::Cancel,
+            _ => {
+                let selection = rltk::letter_to_option(key);
+                if selection > -1 && selection < count {
+                    return ItemMenuResult::Selected(equippable[selection as usize]);
+                }
+                ItemMenuResult::NoResponse
+            }
+        },
     }
 }

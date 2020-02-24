@@ -92,7 +92,6 @@ impl Map {
             let x = rng.roll_dice(1, map.width - w - 1) - 1;
             let y = rng.roll_dice(1, map.height - h - 1) - 1;
             let new_room = Rect::new(x, y, w, h);
-            let mut ok = true;
             for other_room in map.rooms.iter() {
                 if new_room.intersect(other_room) {
                     // Skip to the next room

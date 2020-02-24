@@ -8,6 +8,7 @@ mod components;
 mod damage_system;
 mod gamelog;
 mod gui;
+mod item_collection_system;
 mod map;
 mod map_indexing_system;
 mod melee_combat_system;
@@ -20,7 +21,7 @@ mod visibility_system;
 pub use components::*;
 use damage_system::*;
 use gamelog::*;
-use gui::*;
+use item_collection_system::*;
 pub use map::*;
 use map_indexing_system::*;
 use melee_combat_system::*;
@@ -37,6 +38,7 @@ pub enum RunState {
     PlayerTurn,
     MonsterTurn,
     Examining,
+    ShowInventory,
 }
 
 pub struct State {
@@ -55,6 +57,8 @@ impl State {
         damage.run_now(&self.ecs);
         let mut melee = MeleeCombatSystem {};
         melee.run_now(&self.ecs);
+        let mut pickup = ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -63,6 +67,23 @@ impl State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
+
+        {
+            draw_map(&self.ecs, ctx);
+
+            let positions = self.ecs.read_storage::<Position>();
+            let renderables = self.ecs.read_storage::<Renderable>();
+            let map = self.ecs.fetch::<Map>();
+
+            for (pos, render) in (&positions, &renderables).join() {
+                let idx = map.xy_idx(pos.x, pos.y);
+                if map.visible_tiles[idx] {
+                    ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+                }
+            }
+
+            gui::draw_ui(&self.ecs, ctx);
+        }
 
         let mut current_runstate: RunState;
         {
@@ -87,6 +108,25 @@ impl GameState for State {
                 self.run_systems();
                 current_runstate = RunState::AwaitingInput;
             }
+            RunState::ShowInventory => {
+                let result = gui::show_inventory(self, ctx);
+                match result {
+                    gui::ItemMenuResult::Cancel => {
+                        current_runstate = RunState::AwaitingInput;
+                    }
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected(item) => {
+                        let names = self.ecs.read_storage::<Name>();
+                        let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
+                        gamelog.entries.push(format!(
+                            "You try to use {}, but i've not written that code yet.",
+                            names.get(item).unwrap().name
+                        ));
+
+                        current_runstate = RunState::AwaitingInput;
+                    }
+                }
+            }
         }
 
         {
@@ -95,21 +135,6 @@ impl GameState for State {
         }
 
         DamageSystem::delete_the_dead(&mut self.ecs);
-
-        draw_map(&self.ecs, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let map = self.ecs.fetch::<Map>();
-
-        for (pos, render) in (&positions, &renderables).join() {
-            let idx = map.xy_idx(pos.x, pos.y);
-            if map.visible_tiles[idx] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
-        }
-
-        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
@@ -157,4 +182,6 @@ fn register_components(ecs: &mut World) {
     ecs.register::<SufferDamage>();
     ecs.register::<Item>();
     ecs.register::<Potion>();
+    ecs.register::<InBackpack>();
+    ecs.register::<WantsToPickupItem>();
 }

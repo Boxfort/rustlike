@@ -4,7 +4,7 @@ use super::{
     BlocksTile, CombatStats, Item, Monster, Name, Player, Position, Potion, Rect, Renderable,
     Viewshed, MAPWIDTH,
 };
-use rltk::{console, RandomNumberGenerator, RGB};
+use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
 
 const MAX_MONSTERS: i32 = 4;
@@ -46,7 +46,7 @@ pub fn populate_room(ecs: &mut World, room: &Rect) {
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
         let num_monsters = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
-        let num_items = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
+        let num_items = rng.roll_dice(1, MAX_ITEMS + 2) - 3;
 
         for _i in 0..num_monsters {
             // Loop until a valid point to spawn is found
