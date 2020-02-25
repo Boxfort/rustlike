@@ -8,6 +8,7 @@ mod components;
 mod damage_system;
 mod gamelog;
 mod gui;
+mod inventory_system;
 mod item_collection_system;
 mod map;
 mod map_indexing_system;
@@ -21,6 +22,7 @@ mod visibility_system;
 pub use components::*;
 use damage_system::*;
 use gamelog::*;
+use inventory_system::*;
 use item_collection_system::*;
 pub use map::*;
 use map_indexing_system::*;
@@ -59,6 +61,8 @@ impl State {
         melee.run_now(&self.ecs);
         let mut pickup = ItemCollectionSystem {};
         pickup.run_now(&self.ecs);
+        let mut potions = PotionUseSystem {};
+        potions.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -116,13 +120,13 @@ impl GameState for State {
                     }
                     gui::ItemMenuResult::NoResponse => {}
                     gui::ItemMenuResult::Selected(item) => {
-                        let names = self.ecs.read_storage::<Name>();
-                        let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
-                        gamelog.entries.push(format!(
-                            "You try to use {}, but i've not written that code yet.",
-                            names.get(item).unwrap().name
-                        ));
-
+                        let mut intent = self.ecs.write_storage::<WantsToDrinkPotion>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDrinkPotion { potion: item },
+                            )
+                            .expect("Unable to insert intent");
                         current_runstate = RunState::AwaitingInput;
                     }
                 }
@@ -184,4 +188,5 @@ fn register_components(ecs: &mut World) {
     ecs.register::<Potion>();
     ecs.register::<InBackpack>();
     ecs.register::<WantsToPickupItem>();
+    ecs.register::<WantsToDrinkPotion>();
 }
