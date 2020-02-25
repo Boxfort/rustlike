@@ -41,6 +41,7 @@ pub enum RunState {
     MonsterTurn,
     Examining,
     ShowInventory,
+    ShowDropItem,
 }
 
 pub struct State {
@@ -63,6 +64,8 @@ impl State {
         pickup.run_now(&self.ecs);
         let mut potions = PotionUseSystem {};
         potions.run_now(&self.ecs);
+        let mut drop_items = ItemDropSystem {};
+        drop_items.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -131,6 +134,22 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::ShowDropItem => {
+                let result = gui::show_drop_item(self, ctx);
+                match result {
+                    gui::ItemMenuResult::Cancel => {
+                        current_runstate = RunState::AwaitingInput;
+                    }
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected(item) => {
+                        let mut intent = self.ecs.write_storage::<WantsToDropItem>();
+                        intent
+                            .insert(*self.ecs.fetch::<Entity>(), WantsToDropItem { item })
+                            .expect("Unable to insert intent");
+                        current_runstate = RunState::AwaitingInput;
+                    }
+                }
+            }
         }
 
         {
@@ -189,4 +208,5 @@ fn register_components(ecs: &mut World) {
     ecs.register::<InBackpack>();
     ecs.register::<WantsToPickupItem>();
     ecs.register::<WantsToDrinkPotion>();
+    ecs.register::<WantsToDropItem>();
 }

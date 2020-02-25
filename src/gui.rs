@@ -129,6 +129,14 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 }
 
 pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
+    show_item_menu("Inventory", gs, ctx)
+}
+
+pub fn show_drop_item(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
+    show_item_menu("Drop which item?", gs, ctx)
+}
+
+fn show_item_menu(title: &str, gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
@@ -162,7 +170,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
         y - 2,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "Inventory",
+        title,
     );
     ctx.print_color(
         inventory_x + 3,
@@ -172,7 +180,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
         "ESCAPE to cancel",
     );
 
-    let mut equippable: Vec<Entity> = Vec::new();
+    let mut usable: Vec<Entity> = Vec::new();
     for (i, (entity, _pack, name)) in inventory.iter().enumerate() {
         // Draw the inventory contents
         ctx.set(
@@ -198,7 +206,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
         );
 
         ctx.print(inventory_x + 6, y, &name.name.to_string());
-        equippable.push(*entity);
+        usable.push(*entity);
 
         y += 1;
     }
@@ -210,7 +218,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
             _ => {
                 let selection = rltk::letter_to_option(key);
                 if selection > -1 && selection < count {
-                    return ItemMenuResult::Selected(equippable[selection as usize]);
+                    return ItemMenuResult::Selected(usable[selection as usize]);
                 }
                 ItemMenuResult::NoResponse
             }

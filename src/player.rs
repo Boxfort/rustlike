@@ -98,6 +98,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::G => return get_item(&mut gs.ecs),
             // Handle Inventory
             VirtualKeyCode::I => return RunState::ShowInventory,
+            // Handle Dropping
+            VirtualKeyCode::D => return RunState::ShowDropItem,
             // No key is being pressed so we're still waiting for input
             _ => return state,
         },
